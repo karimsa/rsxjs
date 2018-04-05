@@ -3,15 +3,12 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-export interface BreakerOptionsGiven {
-  maxErrors?: number
-  timeout?: number
-}
-
 export interface BreakerOptions {
   maxErrors: number
   timeout: number
 }
+
+export type BreakerOptionsGiven = Partial<BreakerOptions>
 
 export function defaults(config?: BreakerOptionsGiven): BreakerOptions {
   const updatedConfig: BreakerOptions = Object.assign({}, DefaultBreakerOptions)

@@ -8,3 +8,9 @@ export type AsyncFunction<T> = (...args: any[]) => Promise<T>
 export type SyncFunction<T> = (...args: any[]) => T
 
 export type Callback = (err: Error | null, ...args: any[]) => void
+
+export interface LinkedNode<T> {
+  prev?: LinkedNode<T>
+  next?: LinkedNode<T>
+  value: T
+}
