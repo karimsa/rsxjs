@@ -4,9 +4,11 @@
 **Table of Contents:**
 
  - Components
-   - Circuit Breakers
-   - Brokers
-   - Pools 
+   - [Circuit Breakers](docs/breaker.md)
+   - Brokers (*todo*)
+   - Pools (*todo*)
+   - Mutexes (*todo*)
+   - Semaphores (*todo*)
 
 ## License
 
