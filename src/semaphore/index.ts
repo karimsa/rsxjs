@@ -50,7 +50,7 @@ export class Semaphore extends Lock {
       const req = this.requests.shift()
       if (req) {
         --this.available
-        req.resolve()
+        req.resolve(req.unlock)
       }
 
       innerRelease()
