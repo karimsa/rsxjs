@@ -8,17 +8,19 @@ import { delay } from 'bluebird'
 
 import { Mutex } from '../../'
 
-test('Mutex.create()', async t => {
-  const m = Mutex.create()
+test('new Mutex()', async t => {
+  const m = new Mutex()
   const LEN = 30
   const DELAY = 100
 
   const frames = []
   async function lockedFn() {
-    await m.lock()
+    const unlock = await m.lock()
+    t.is(m.isLocked(), true)
     await delay(DELAY + 1)
     frames.push(Date.now())
-    m.unlock()
+    unlock()
+    t.throws(unlock)
   }
 
   // concurrently start 30 of these, should
@@ -29,6 +31,7 @@ test('Mutex.create()', async t => {
     [...new Array(LEN).keys()].map(lockedFn)
   )
   const end = Date.now()
+  t.is(m.isLocked(), false)
 
   t.true(end - start >= 3e3, 'should take at least 3s to run')
   t.is(frames.length, LEN, `should have ${LEN} frames`)

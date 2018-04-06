@@ -22,19 +22,39 @@ export interface Deferred<T> {
 }
 
 export function defer<T>(): Deferred<T> {
-  const d: Deferred<T> = {
-    resolve() {},
-    reject() {},
-    promise: new Promise<T>((resolve, reject) => {
-      // seems that TS promise implementation seems to
-      // evaluate promise synchronously? wtf. -> 'd' does
-      // not seem to exist without the call to nextTick
-      process.nextTick(() => {
-        d.resolve = resolve
-        d.reject = reject
-      })
-    })
-  }
+  const d: Deferred<T> = <Deferred<T>>{}
+
+  d.promise = new Promise<T>((resolve, reject) => {
+    // seems that TS promise implementation seems to
+    // evaluate promise synchronously? wtf. -> 'd' does
+    // not seem to exist without the call to nextTick
+    d.resolve = resolve
+    d.reject = reject
+  })
 
   return d
+}
+
+/**
+ * Use simple empty timer to ensure that in a locked state,
+ * the event loop stays alive.
+ */
+export abstract class Referred {
+  private _ref?: NodeJS.Timer
+  protected ref() { this._ref = setInterval(() => {}, 2**31 - 1) }
+  protected unref() { if (this._ref) clearTimeout(this._ref) }
+}
+
+/**
+ * Simple abstract class that defines how a lock should work.
+ * Generic shape for both mutexes and semaphores.
+ */
+export type ReleaseLock = (() => void) | (() => Promise<void>)
+export abstract class Lock extends Referred {
+  protected requests: (Deferred<ReleaseLock> & {
+    unlock: ReleaseLock
+  })[] = []
+
+  abstract isLocked(): boolean
+  abstract lock(): Promise<ReleaseLock>
 }
