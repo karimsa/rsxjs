@@ -29,6 +29,8 @@
     "@types/debug": "0.0.30",
     "@types/node": "^9.6.2",
     "ava": "^1.0.0-beta.3",
+    "bluebird": "^3.5.1",
+    "lolex": "^2.3.2",
     "sinon": "^4.5.0",
     "typescript": "^2.8.1"
   },
@@ -38,7 +40,6 @@
     ]
   },
   "dependencies": {
-    "debug": "^3.1.0",
-    "lolex": "^2.3.2"
+    "debug": "^3.1.0"
   }
 }
