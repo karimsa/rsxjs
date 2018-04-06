@@ -5,8 +5,10 @@
 
 import * as Breaker from './breaker'
 import * as Pool from './pool'
+import * as Mutex from './mutex'
 
 export {
   Breaker,
   Pool,
+  Mutex,
 }
