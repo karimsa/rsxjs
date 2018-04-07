@@ -3,6 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import * as Errors from '../errors'
 import { Deferred, defer, Lock, ReleaseLock } from '../types'
 
 export class Mutex extends Lock {
@@ -18,7 +19,7 @@ export class Mutex extends Lock {
    * Lock the mutex.
    * @returns {Promise<ReleaseLock>} resolves when mutex is available with a function that can release the mutex
    */
-  lock(): Promise<ReleaseLock> {
+  async lock(failWithoutLock: boolean = false): Promise<ReleaseLock> {
     /**
      * Single-use unlocker. Created for each locked
      * state created so that unlocks are not leaked.
@@ -45,7 +46,11 @@ export class Mutex extends Lock {
 
     if (!wasLocked) {
       this.ref()
-      return Promise.resolve(unlock)
+      return unlock
+    }
+
+    if (failWithoutLock) {
+      throw new Error(Errors.COULD_NOT_LOCK)
     }
 
     /**

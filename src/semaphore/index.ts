@@ -4,6 +4,7 @@
  */
 
 import { Mutex } from '../mutex'
+import * as Errors from '../errors'
 import { Lock, Deferred, defer, ReleaseLock } from '../types'
 
 export class Semaphore extends Lock {
@@ -39,8 +40,13 @@ export class Semaphore extends Lock {
     return this.available === 0
   }
 
-  async lock(): Promise<ReleaseLock> {
-    const releaseMutex = await this.mutex.lock()
+  /**
+   * Tries to obtain a token from the semaphore.
+   * @param {boolean = true} failWithoutLock if true, it will throw an error if it cannot obtain a token
+   * @returns {Promise<ReleaseLock>} resolves with a function that can be used to release the token
+   */
+  async lock(failWithoutLock: boolean = false): Promise<ReleaseLock> {
+    const releaseMutex = await this.mutex.lock(failWithoutLock)
 
     const unlock: ReleaseLock = async () => {
       const innerRelease = await this.mutex.lock()
@@ -59,7 +65,11 @@ export class Semaphore extends Lock {
     if (!this.isLocked()) {
       --this.available
       releaseMutex()
-      return Promise.resolve(unlock)
+      return unlock
+    }
+
+    if (failWithoutLock) {
+      throw new Error(Errors.COULD_NOT_LOCK)
     }
 
     const deferred: Deferred<ReleaseLock> = defer()
