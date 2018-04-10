@@ -8,6 +8,7 @@ import * as Mutex from './mutex'
 import * as Pool from './pool'
 import * as Semaphore from './semaphore'
 import * as Timeout from './timeout'
+import * as Fallback from './fallback'
 
 export {
   Breaker,
@@ -15,4 +16,5 @@ export {
   Pool,
   Semaphore,
   Timeout,
+  Fallback,
 }
