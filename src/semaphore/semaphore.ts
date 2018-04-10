@@ -46,7 +46,7 @@ export class Semaphore extends Lock {
    * @returns {Promise<ReleaseLock>} resolves with a function that can be used to release the token
    */
   async lock(failWithoutLock: boolean = false): Promise<ReleaseLock> {
-    const releaseMutex = await this.mutex.lock(failWithoutLock)
+    const releaseMutex = await this.mutex.lock()
 
     const unlock: ReleaseLock = async () => {
       const innerRelease = await this.mutex.lock()
