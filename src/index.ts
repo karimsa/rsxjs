@@ -4,17 +4,17 @@
  */
 
 import * as Breaker from './breaker'
-import * as Pool from './pool'
 import * as Bulkhead from './bulkhead'
+import * as Mutex from './mutex'
+import * as Pool from './pool'
+import * as Semaphore from './semaphore'
 import * as Timeout from './timeout'
-import { Mutex } from './mutex'
-import { Semaphore } from './semaphore'
 
 export {
   Breaker,
-  Pool,
   Bulkhead,
-  Timeout,
   Mutex,
+  Pool,
   Semaphore,
+  Timeout,
 }

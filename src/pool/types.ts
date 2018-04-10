@@ -12,7 +12,7 @@ export interface PoolOptions {
 export type PoolOptionsGiven = Partial<PoolOptions>
 
 export function defaults(
-  options?: PoolOptionsGiven
+  _?: PoolOptionsGiven
 ): PoolOptions {
   const config: PoolOptions = {
     // ...
@@ -63,7 +63,6 @@ export class GenericPool<T extends Worker> {
   getExistingWorker(): T | void {
     for (let node: LinkedNode<T> | void = this.head; node; node = node.next) {
       if (isWorkerAvailable(node.value)) {
-        console.log('found available worker', node.value.name)
         return node.value
       }
     }

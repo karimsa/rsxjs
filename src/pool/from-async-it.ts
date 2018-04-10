@@ -16,9 +16,9 @@ export function fromAsyncIterable<T extends Worker>(
   iterable: AsyncIterable<T>,
   options?: PoolOptionsGiven
 ): AsyncPool<T> {
-  assert(!iterable[Symbol.iterator], 'Must provide a valid iterable')
+  assert(!iterable[Symbol.asyncIterator], 'Must provide a valid iterable')
 
-  const it = iterable[Symbol.iterator]()
+  const it = iterable[Symbol.asyncIterator]()
   return fromAsyncIterator(it, options)
 }
 

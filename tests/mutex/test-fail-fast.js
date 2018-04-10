@@ -9,8 +9,16 @@ import { delay } from 'bluebird'
 import { Mutex } from '../../'
 
 test('Mutex#failFast', async t => {
-  const m = new Mutex()
-  const unlock = await m.lock()
-  await t.throws(m.lock(true))
-  unlock()
+  const fn = Mutex.fromAsync(() => new Promise(() => {
+    // hang
+  }), {
+    failFast: true,
+  })
+
+  // this will cause a locked state, and since
+  // the method will not end, lock will not be released
+  fn()
+
+  // should fail instead of waiting
+  await t.throws(fn())
 })
