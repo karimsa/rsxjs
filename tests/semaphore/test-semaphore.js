@@ -8,16 +8,28 @@ import { delay } from 'bluebird'
 
 import { Semaphore } from '../../'
 
-test('new Semaphore()', async t => {
-  const SIZE = 5
-  const s = new Semaphore(SIZE)
-  t.plan(SIZE)
+test('fromAsync()', async t => {
+  const SIZE = 2
+  const DELAY = 500
 
-  // gain SIZE locks
-  for (let i = 0; i < SIZE; ++i) {
-    await s.lock()
+  const frames = {}
+  const work = Semaphore.fromAsync(function worker(data) {
+    frames[data.message] = Date.now()
+    return delay(DELAY + 1)
+  }, {
+    size: SIZE,
+  })
 
-    if (SIZE - 1 === i) t.true(s.isLocked())
-    else t.false(s.isLocked())
-  }
+  await Promise.all([
+    work({ message: 'a' }),
+    work({ message: 'b' }),
+    work({ message: 'c' }),
+    work({ message: 'd' }),
+    work({ message: 'e' }),
+  ])
+
+  t.true(frames.b - frames.a <= 100, 'a and b should be run concurrently')
+  t.true(frames.c - Math.min(frames.a, frames.b) >= 500, 'c and a,b should have a pause in between')
+  t.true(frames.d - frames.c <= 100, 'c and d should be run concurrently')
+  t.true(frames.e - Math.min(frames.c, frames.d) >= 500, 'e and c,d should have a pause in between')
 })

@@ -4,22 +4,18 @@
  */
 
 import test from 'ava'
-import { delay } from 'bluebird'
 
 import { Semaphore } from '../../'
 
-test('Semaphore#failFast', async t => {
-  const SIZE = 5
-  const s = new Semaphore(SIZE)
-  t.plan(SIZE + 1)
+test('fromAsync()#failFast', async t => {
+  const SIZE = 2
+  const work = Semaphore.fromAsync(() => new Promise(() => {}), {
+    size: SIZE,
+    failFast: true,
+  })
 
-  // gain SIZE locks
-  for (let i = 0; i < SIZE; ++i) {
-    await s.lock()
+  work()
+  work()
 
-    if (SIZE - 1 === i) t.true(s.isLocked())
-    else t.false(s.isLocked())
-  }
-
-  await t.throws(s.lock(true))
+  await t.throws(work())
 })
