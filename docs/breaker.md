@@ -38,4 +38,4 @@ you will get a function that takes a callback back, etc.
 | Name      | Type         | Default      | Description                                   |
 |-----------|--------------|--------------|-----------------------------------------------|
 | maxErrors | number (>=1) | 10           | maximum number of errors before tripping      |
-| timeout   | 10s          | number (>=1) | time span between a closed and halfopen state |
+| timeout   | number       | 10s          | time span between a closed and halfopen state |
