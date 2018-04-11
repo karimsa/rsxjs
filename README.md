@@ -1,4 +1,8 @@
-<h1 align="center">rsx.js</h1>
+<p align="center">
+  <img src=".github/logo.png">
+</p>
+
+<h2 align="center">rsx.js</h2>
 <p align="center">Resilience Extensions for JS.</p>
 
 **Table of Contents:**
@@ -12,6 +16,7 @@
    - [Pools](docs/pool.md)
    - [Timeout](docs/timeout.md)
  - [Combining Components](docs/policies.md)
+ - [License and Attribution](#license-and-attribution)
 
 ## TL;DR
 
@@ -42,8 +47,14 @@ Here are the components that are currently supported:
   - [Pools](docs/pool.md)
   - [Timeout](docs/timeout.md)
 
-## License
+## License and Attribution
 
 License under MIT license.
 
 Copyright &copy; 2018-present Karim Alibhai. All rights reserved.
+
+### Logo Attribution
+
+"falling" by Laurent Canivet from the Noun Project.
+
+[The Noun Project](https://thenounproject.com) is amazing.
