@@ -28,26 +28,18 @@ To circumvent this possibility, rsxjs abstracts the low-level locking & unlockin
 
 ### Operating on the same array
 
-<!-- TODO: I'd like to improve this example -->
-
 ```javascript
 import { Mutex } from 'rsxjs'
 
+// creates a large amount of work
 const work = []
-
-const enqueue = Mutex.fromAsync(function enqueue(value) {
-  work.push(value)
-})
+for (let i = 0; i < 1e6; ++i) {
+  work.push({ num: i })
+}
 
 const dequeue = Mutex.fromAsync(function dequeue(value) {
   return work.shift()
 })
-
-async function createWork() {
-  for (let i = 0; i < 1e6; ++i) {
-    await enqueue({ num: i })
-  }
-}
 
 async function doWork() {
   let sum = 0
@@ -63,16 +55,20 @@ async function doWork() {
   return sum
 }
 
-// createWork() and doWork() will run concurrently and operate
-// on the same array, but neither will interfere with the others'
-// operations on the array - since an `enqueue()` and a `dequeue()`
-// cannot happen at the same time
+// in this situation, we have work that needs to be completed sitting
+// in a queue which is shared between 4 concurrent workers. Without synchronization,
+// we can easily end up in a case where two workers are working on the same piece of work
+// at the same time.
+// To avoid this, we can make sure that the 'dequeue' function - which operates on the shared
+// resource, is wrapped in a Mutex component so that only one call to dequeue can run at a time.
+// This will allow synchronization between the workers since they may run concurrently, but they
+// must hand-off control of the queue between each other
 await Promise.all([
-  createWork(),
-  doWork()
+  doWork(),
+  doWork(),
+  doWork(),
+  doWork(),
 ]).then((_, sum) => {
   console.log('The sum is: %s', sum)
 })
 ```
-
-*Hint: you can utilize pooling in this example for some extra efficiency.*
