@@ -1,0 +1,18 @@
+language: node_js
+node_js:
+- 4
+- 6
+- 8
+script:
+- npm run build
+- npm test
+deploy:
+  provider: npm
+  email: karim@alibhai.co
+  api_key:
+    secure: uI3dy8srZSatvAawLamOQ4o5nO/dmettRquJL9cUBMiLXDdcAJTrhjv7M/MMnJ6y/pxJASVcR9xAN5YYHztI3cVxmNVYnBvA8hf8GTXC/gzxfT0ToY2Ly6ZyIG537I3kYT9GG7EScQPs1wasnbakp9gdNXtCmi7xTfn9UX4INNt3+bOpG67F6YBNzO1qhfuGVMz+b9X1NEqmgny0rJJZfdUxYQfBzcd4H8npy7bDp/BPwxejTJFZxykTluozs+vpPaWmcl3+RNSoBRcZkBnpErrAcG6EcNAXQ5GT+KvxQpGi8q/gcalvmeU5UUVX8X7V6lT9itoSoanOB2Eho13NRfTA/dkIBZHN+s55oBIHQwQwU50ax8Yu/XYRlbL7vhpQS4nJ8f/UG4tSl4np2ADlmzOrW0zA0QC8tIxQg349+lmOFJ1ZueNNykEupqVWyokXWvEmAUXu5zOSxLOUXTFXJryJECjIPBeEFI+GbuwqK1wDaP/f+RB0o63WeqiJhDjWBD/4QJm6fTg4MLD6I2JARZFIOIuQKSfMTMGiveNe6k7g7Rj9+mS8+r3I7zWQ4RRQXqvzcksozGrlSRitXHH9qDUBn5VAfi0uT1aDzxfeuGwiY3HB6bi0GXZaUi7+W0m/TaN1UA6EoH832bU+mJO0jw+Cr6yHxOW9jwfr3mG7Ins=
+  on:
+    tags: true
+    branch: master
+    repo: karimsa/rsxjs
+
