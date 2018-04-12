@@ -3,9 +3,9 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
+const test = require('ava')
 
-import { Semaphore } from '../../'
+const { Semaphore } = require('../../')
 
 test('fromAsync()#failFast', async t => {
   const SIZE = 2

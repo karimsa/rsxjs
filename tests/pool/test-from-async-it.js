@@ -2,11 +2,12 @@
  * @file tests/pool/test-from-async-it.js
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
+/* @supported: >= 10 */
 
-import test from 'ava'
-import { spy } from 'sinon'
+const { test } = require('ava')
+const { spy } = require('sinon')
 
-import { Pool } from '../../'
+const { Pool } = require('../../')
 
 test('fromAsyncIterator()', async t => {
   let nextWorkerName

@@ -3,10 +3,10 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
-import { spy } from 'sinon'
+const test = require('ava')
+const { spy } = require('sinon')
 
-import { Pool } from '../../'
+const { Pool } = require('../../')
 
 test('fromIterator()', async t => {
   let nextWorkerName

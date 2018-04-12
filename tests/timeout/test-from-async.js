@@ -3,11 +3,11 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
-import { spy } from 'sinon'
-import { delay } from 'bluebird'
+const test = require('ava')
+const { spy } = require('sinon')
+const { delay } = require('bluebird')
 
-import { Timeout } from '../../'
+const { Timeout } = require('../../')
 
 test('Timeout.fromAsync()', async t => {
   const timeout = 1000

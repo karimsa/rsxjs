@@ -3,9 +3,9 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
+const test = require('ava')
 
-import { Fallback } from '../../'
+const { Fallback } = require('../../')
 
 test('fromAsync()#asyncFallback', async t => {
   const FALLBACK_VALUE = Math.PI

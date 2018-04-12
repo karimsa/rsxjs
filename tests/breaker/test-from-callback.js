@@ -3,14 +3,14 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
-import lolex from 'lolex'
-import { spy } from 'sinon'
-import { promisify } from 'util'
-import { readFile, readFileSync } from 'fs'
-import { resolve as resolvePath } from 'path'
+const test = require('ava')
+const lolex = require('lolex')
+const { spy } = require('sinon')
+const { promisify } = require('util')
+const { readFile, readFileSync } = require('fs')
+const { resolve: resolvePath } = require('path')
 
-import { Breaker } from '../../'
+const { Breaker } = require('../../')
 
 test('Breaker.fromCallback()', async t => {
   const MAX_ERRORS = 1 // trip after one error

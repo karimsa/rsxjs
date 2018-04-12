@@ -3,10 +3,10 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
-import { delay } from 'bluebird'
+const test = require('ava')
+const { delay } = require('bluebird')
 
-import { Mutex } from '../../'
+const { Mutex } = require('../../')
 
 test('Mutex#fromAsync', async t => {
   const LEN = 30

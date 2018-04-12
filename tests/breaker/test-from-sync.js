@@ -3,10 +3,10 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import test from 'ava'
-import lolex from 'lolex'
+const test = require('ava')
+const lolex = require('lolex')
 
-import { Breaker } from '../../'
+const { Breaker } = require('../../')
 
 test('Breaker.fromSync()', t => {
   const MAX_ERRORS = 1 // trip after one error
