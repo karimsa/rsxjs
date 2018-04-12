@@ -9,6 +9,7 @@ import * as Pool from './pool'
 import * as Semaphore from './semaphore'
 import * as Timeout from './timeout'
 import * as Fallback from './fallback'
+import * as Deferral from './deferral'
 
 export {
   Breaker,
@@ -17,4 +18,5 @@ export {
   Semaphore,
   Timeout,
   Fallback,
+  Deferral,
 }
