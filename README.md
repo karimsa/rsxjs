@@ -46,6 +46,12 @@ Here are the components that are currently supported:
   - [Pools](docs/pool.md)
   - [Timeout](docs/timeout.md)
 
+#### Observables?
+
+Observables are another incredible resilience component and are very useful when trying to design a robust pipeline when you are streaming data. JavaScript already has an incredible library to offer support for observables known as [RxJS](https://npmjs.org/rxjs) - this is why rsxjs does not include observables. RxJS also provides similar functionality as rsxjs but strictly as transformations for streams. Though observables are very useful, you should be careful not to overuse them.
+
+For instance, an observable might be useful in a UI component where a network request may result in multiple results (i.e. one from cache, another from the network). However, using an observable to persist the results of a submitted form on a backend does not make sense.
+
 ## License and Attribution
 
 License under MIT license.
