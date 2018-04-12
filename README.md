@@ -1,8 +1,7 @@
-<p align="center">
-  <img src=".github/logo.png">
-</p>
+<h1 align="center">
+  <img src=".github/logo.png" alt="RSX.JS">
+</h1>
 
-<h2 align="center">rsx.js</h2>
 <p align="center">Resilience Extensions for JS.</p>
 
 **Table of Contents:**
@@ -56,5 +55,7 @@ Copyright &copy; 2018-present Karim Alibhai. All rights reserved.
 ### Logo Attribution
 
 "falling" by Laurent Canivet from the Noun Project.
+
+"Trampoline" by Jonathan Lutaster from the Noun Project.
 
 [The Noun Project](https://thenounproject.com) is amazing.
