@@ -43,6 +43,7 @@
     "compileEnhancements": false
   },
   "dependencies": {
+    "@foko/type-check": "0.0.4",
     "debug": "^3.1.0"
   }
 }
