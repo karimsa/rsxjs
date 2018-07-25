@@ -16,7 +16,8 @@ test('Timeout.fromAsync()', async t => {
   const spyFn = spy(() => new Promise(() => {}))
   const slowOp = Timeout.fromAsync(spyFn, { timeout })
 
-  await t.throws(slowOp(1, 2, 3))
+  const err = await t.throws(slowOp(1, 2, 3))
   t.true(spyFn.called, 'underlying operation should have run')
   t.true(spyFn.calledWithExactly(1, 2, 3), 'arguments should be passed through')
+  t.is(String(err), 'Error: Operation timed out')
 })
