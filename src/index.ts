@@ -16,6 +16,10 @@ export {
 } from './waitgroup'
 
 export {
+  Channel,
+} from './channel'
+
+export {
   Breaker,
   Mutex,
   Pool,
