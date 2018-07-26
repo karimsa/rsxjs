@@ -12,7 +12,7 @@ import {
 } from './types'
 import { Callback } from '../types'
 
-import createDebug = require('debug')
+import createDebug from 'debug'
 const debug = createDebug('rsxjs')
 
 export function fromCallback(

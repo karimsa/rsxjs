@@ -14,7 +14,7 @@ import {
   SyncFunction,
 } from '../types'
 
-import createDebug = require('debug')
+import createDebug from 'debug'
 const debug = createDebug('rsxjs')
 
 export function fromSync<T = any>(
