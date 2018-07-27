@@ -2,7 +2,6 @@
  * @file tests/pool/test-from-async-it.js
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
-/* @supported: >= 10 */
 
 const { test } = require('ava')
 const { spy } = require('sinon')

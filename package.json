@@ -4,7 +4,7 @@
   "description": "Resilience Extensions for JS.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "ava -v $(node scripts/test-files.js)",
+    "test": "ava -v",
     "build": "rollup -c"
   },
   "repository": {
