@@ -1,6 +1,6 @@
 {
   "name": "rsxjs",
-  "version": "0.0.1-2",
+  "version": "0.0.1",
   "description": "Resilience Extensions for JS.",
   "main": "dist/index.js",
   "scripts": {
