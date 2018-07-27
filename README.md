@@ -15,6 +15,7 @@
    - [Semaphores](docs/semaphore.md)
    - [Pools](docs/pool.md)
    - [Timeout](docs/timeout.md)
+   - [WaitGroup](docs/waitgroup.md)
  - [Combining Components](docs/policies.md)
  - [License and Attribution](#license-and-attribution)
 
