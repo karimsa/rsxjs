@@ -36,18 +36,7 @@ The goal of rsxjs is to make available a library of resilience components that a
  3. **Distributed if stateful**: it's not enough for many of these components to simply main a local/offline state. For instance, when using locks or circuit breakers around your microservice or database driver, you would want all of your nodes in your system to synchronize the circuit breakers states and therefore avoid resource exhaustion in a more holistic fashion. Due to this, rsxjs provides a way to persist its components states onto redis in order to help synchronize distributed components - or you can use it locally without any extra setup.
  4. **Highly composable**: the biggest power of JavaScript comes from its composability - the way that highly complex systems can come together by building on top of each other. rsxjs tries to keep to JavaScript's fundamentals in order to maintain these concepts so that you actually end up adding resilience as a layer on top of your application instead of having to uproot any design.
 
-### Components
-
-Here are the components that are currently supported:
-
-  - [Circuit Breakers](docs/breaker.md)
-  - [Fallback](docs/fallback.md)
-  - [Mutexes](docs/mutex.md)
-  - [Semaphores](docs/semaphore.md)
-  - [Pools](docs/pool.md)
-  - [Timeout](docs/timeout.md)
-
-#### Observables?
+### Observables?
 
 Observables are another incredible resilience component and are very useful when trying to design a robust pipeline when you are streaming data. JavaScript already has an incredible library to offer support for observables known as [RxJS](https://npmjs.org/rxjs) - this is why rsxjs does not include observables. RxJS also provides similar functionality as rsxjs but strictly as transformations for streams. Though observables are very useful, you should be careful not to overuse them.
 
