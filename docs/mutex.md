@@ -2,11 +2,11 @@
 
 Mutexes are a type of locking mechanism that allow for concurrent processes to synchronize data amongst themselves by requiring themselves to obtain a lock before operating on shared resources.
 
-Typically, this would happen at a thread-level where you can request a low-level thread lock on your thread so that operations are truly halted during the waiting period. However, even though JS does not have thread-access, the same concept carries over to concurrent/async tasks in JS. There are times when you need to operate on a shared resource and those operations should occurr in a locked state.
+Even though JS does not have thread-access, the same concept carries over to concurrent/async tasks in JS. It is not possible, nor required, to obtain a synchronous mutex in JS. Due to the design of the event loop, all sychronous code is automatically blocking on a single thread and is therefore not in danger of allowing parallel access to shared resources (the callstack + event loop act as a lock for you).
+
+However, async functions in JS read synchronously but there are ticks in between each await which can result in the "parallel" accessing of a shared resource even though JS is not multi-threaded. The mutex component is built to wrap around the entire async function and therefore retain the lock during multiple event loop ticks.
 
 ## API
-
-It is not possible to obtain a mutex from rsxjs synchronously (since this would halt the event loop and therefore the mutex could never actually be released) so it will only ever be possible to wrap this component around async functions - but there are intentions to wrap this around a sync function which would result in an async function.
 
 Available methods:
 
@@ -18,57 +18,32 @@ Available methods:
 |-----------|--------------|--------------|-----------------------------------------------|
 | failFast  | boolean      | true         | if true, will error out when attempting to obtain lock if lock already exists as opposed to waiting for lock to be available |
 
-### Where's my low-level Mutex???
+### Where's my raw mutex???
 
-The low-level Mutex class is not exposed outside of rsxjs to help avoid deadlock states. In particular, it is very easy to write your async function as a function that obtains a mutex, then fails, causing every other operation that uses the same mutex to halt forever.
+The raw Mutex class is not exposed outside of rsxjs to help avoid deadlock states. In particular, it is very easy to write your async function as a function that obtains a mutex, then fails, causing every other operation that uses the same mutex to halt forever.
 
-To circumvent this possibility, rsxjs abstracts the low-level locking & unlocking away from the userland and just exposes an API to wrap async functions in a Mutex which automatically attempts to obtain a lock before calling its underlying function then releases the lock before returning / erroring out. For some designs, this might mean that you need to pull the logic in your code that operates in a locked state out of your main function and into a helper function and wrap the Mutex only around your helper. This would allow your logic to utilize Mutexes while only entering a locked state for the minimum amount of time required.
+To circumvent this possibility, rsxjs abstracts the raw locking & unlocking away from the userland and just exposes an API to wrap async functions in a Mutex which automatically attempts to obtain a lock before calling its underlying function then releases the lock before returning / erroring out. For some designs, this might mean that you need to pull the logic in your code that operates in a locked state out of your main function and into a helper function and wrap the Mutex only around your helper. This would allow your logic to utilize Mutexes while only entering a locked state for the minimum amount of time required.
 
 ## Examples
 
-### Operating on the same array
+### Operating on an async resource
 
 ```javascript
 import { Mutex } from 'rsxjs'
 
-// creates a large amount of work
-const work = []
-for (let i = 0; i < 1e6; ++i) {
-  work.push({ num: i })
-}
-
-const dequeue = Mutex.fromAsync(function dequeue(value) {
-  return work.shift()
-})
-
-async function doWork() {
-  let sum = 0
-
-  while (true) {
-    const job = await dequeue()
-
-    if (job) {
-      sum += job.num
-    }
+const run = Mutex.fromAsync(async function() {
+  // this operation is not atomic, since the ticks in between
+  // your get and set might change the value of "key"
+  if (await get('key') === expectedValue) {
+    await set('key', newValue)
   }
-
-  return sum
-}
-
-// in this situation, we have work that needs to be completed sitting
-// in a queue which is shared between 4 concurrent workers. Without synchronization,
-// we can easily end up in a case where two workers are working on the same piece of work
-// at the same time.
-// To avoid this, we can make sure that the 'dequeue' function - which operates on the shared
-// resource, is wrapped in a Mutex component so that only one call to dequeue can run at a time.
-// This will allow synchronization between the workers since they may run concurrently, but they
-// must hand-off control of the queue between each other
-await Promise.all([
-  doWork(),
-  doWork(),
-  doWork(),
-  doWork(),
-]).then((_, sum) => {
-  console.log('The sum is: %s', sum)
 })
+
+// the event loop will alternate between these processes during
+// ticks due to the awaits, but the mutex will force the second
+// operation to wait until the first operation is fully complete
+Promise.all([
+  run(),
+  run(),
+])
 ```
