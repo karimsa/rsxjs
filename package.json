@@ -27,7 +27,9 @@
   "homepage": "https://github.com/karimsa/rsxjs#readme",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.54",
+    "@babel/polyfill": "^7.0.0-beta.54",
     "@babel/preset-env": "^7.0.0-beta.54",
+    "@babel/register": "^7.0.0-beta.54",
     "@types/debug": "0.0.30",
     "@types/node": "^10.5.2",
     "ava": "^1.0.0-beta.3",
@@ -40,6 +42,7 @@
     "typescript": "^2.9.2"
   },
   "ava": {
+    "cache": true,
     "timeout": "4s",
     "files": [
       "tests/**/test-*.js"
