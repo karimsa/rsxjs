@@ -20,6 +20,10 @@ export {
 } from './channel'
 
 export {
+  co,
+} from './coroutine'
+
+export {
   Breaker,
   Mutex,
   Pool,
