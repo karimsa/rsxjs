@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es5",
+    "pretty": true,
+    "target": "esnext",
     "lib": [
-      "es2015",
-      "esnext.asynciterable"
+      "esnext"
     ],
     "noImplicitAny": true,
     "noImplicitThis": true,
@@ -15,7 +15,9 @@
     "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true
   },
   "files": [
     "src/index.ts"

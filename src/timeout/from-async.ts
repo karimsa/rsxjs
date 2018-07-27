@@ -3,32 +3,22 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import * as Errors from '../errors'
 import { AsyncFunction } from '../types'
-import { defaults, TimeoutOptionsGiven } from './types'
+import { TimeoutOptionsGiven } from './types'
+import { fromPromise } from './from-promise'
 
 /**
- * Enforce a timeout over an async function.
- * @param {AsyncFunction<T>} cb async function to enforce timeout over
+ * Enforce a timeout over an existing promise.
+ * @param {Promise<T>} promise promise to enforce timeout over
  * @param {TimeoutOptions} _options timeout options
- * @returns {AsyncFunction<T>} an async function with identical behavior, but will timeout
+ * @returns {Promises<T>} resolves with the promise's value, or rejects with a timeout
  */
 export function fromAsync<T>(
   cb: AsyncFunction<T>,
-  _options?: TimeoutOptionsGiven
+  options?: TimeoutOptionsGiven
 ): AsyncFunction<T> {
-  const options = defaults(_options)
-
   return function asyncTimeout(this: any, ...args: any[]): Promise<T> {
-    return new Promise(async (resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error(Errors.TIMEOUT))
-      }, options.timeout)
-
-      const retval = await cb.apply(this, args)
-      clearTimeout(timeout)
-      resolve(retval)
-    })
+    return fromPromise(cb.apply(this, args), options)
   }
 }
 

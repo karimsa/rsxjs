@@ -26,6 +26,8 @@ export function defaults(options?: TimeoutOptionsGiven): TimeoutOptions {
       }
 
       config.timeout = options.timeout
+    } else {
+      throw new Error('No timeout option provided! It is required.')
     }
   }
 

@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "ava -v $(node scripts/test-files.js)",
-    "build": "tsc"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -26,23 +26,46 @@
   },
   "homepage": "https://github.com/karimsa/rsxjs#readme",
   "devDependencies": {
+    "@babel/core": "^7.0.0-beta.54",
+    "@babel/polyfill": "^7.0.0-beta.54",
+    "@babel/preset-env": "^7.0.0-beta.54",
+    "@babel/register": "^7.0.0-beta.54",
     "@types/debug": "0.0.30",
-    "@types/node": "^9.6.2",
+    "@types/node": "^10.5.2",
     "ava": "^1.0.0-beta.3",
     "bluebird": "^3.5.1",
-    "lolex": "^2.3.2",
-    "sinon": "^4.5.0",
-    "typescript": "^2.8.1"
+    "lolex": "^2.7.1",
+    "rollup": "^0.63.4",
+    "rollup-plugin-babel": "^4.0.0-beta.7",
+    "rollup-plugin-typescript2": "^0.16.1",
+    "sinon": "^6.1.4",
+    "typescript": "^2.9.2"
   },
   "ava": {
+    "cache": true,
     "timeout": "4s",
     "files": [
       "tests/**/test-*.js"
     ],
-    "babel": false,
-    "compileEnhancements": false
+    "compileEnhancements": true,
+    "require": [
+      "@babel/register",
+      "@babel/polyfill"
+    ],
+    "babel": {
+      "testOptions": {
+        "babelrc": false,
+        "only": [
+          "tests/**/*.js"
+        ],
+        "presets": [
+          "@babel/preset-env"
+        ]
+      }
+    }
   },
   "dependencies": {
+    "@foko/type-check": "0.0.4",
     "debug": "^3.1.0"
   }
 }

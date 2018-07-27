@@ -14,7 +14,7 @@ import {
   AsyncFunction,
 } from '../types'
 
-import createDebug = require('debug')
+import createDebug from 'debug'
 const debug = createDebug('rsxjs')
 
 export function fromAsync<T = any>(

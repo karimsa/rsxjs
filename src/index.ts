@@ -12,6 +12,14 @@ import * as Fallback from './fallback'
 import * as Deferral from './deferral'
 
 export {
+  WaitGroup,
+} from './waitgroup'
+
+export {
+  Channel,
+} from './channel'
+
+export {
   Breaker,
   Mutex,
   Pool,
