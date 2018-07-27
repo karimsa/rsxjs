@@ -8,14 +8,14 @@ const { spy } = require('sinon')
 
 const { Deferral } = require('../../')
 
-test('fromAsync()', async t => {
+test('on success', async t => {
   const fn = spy(() => {})
   const op = Deferral.fromAsync(async function ( defer ) {
     defer(fn)
-    throw new Error('Failure')
+    await 1
+    await 2
   })
 
-  const e = await t.throws(op())
-  t.is(String(e), 'Error: Failure')
+  t.is(await op(), undefined)
   t.true(fn.calledOnce)
 })
