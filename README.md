@@ -9,6 +9,7 @@
  - [TL;DR](#tldr)
  - [Getting Started](#getting-started)
    - [Circuit Breakers](docs/breaker.md)
+   - [Deferral](docs/deferral.md)
    - [Fallback](docs/fallback.md)
    - [Mutexes](docs/mutex.md)
    - [Semaphores](docs/semaphore.md)
