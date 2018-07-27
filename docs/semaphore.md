@@ -18,7 +18,7 @@ Available methods:
 |-----------|--------------|--------------|-----------------------------------------------|
 | failFast  | boolean      | true         | if true, will error out when attempting to obtain lock if lock already exists as opposed to waiting for lock to be available |
 
-### Where's my low-level Semaphore???
+### Where's my raw semaphore???
 
 See [mutex](mutex.md) for an explaination.
 
