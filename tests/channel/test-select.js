@@ -7,7 +7,22 @@ const { test } = require('ava')
 
 const { makeChan, select } = require('../../')
 
-test('blocking select', async t => {
+test('blocking select on unbuffered channel', async t => {
+  const chanA = makeChan()
+  const chanB = makeChan()
+
+  setTimeout(() => chanB.put('test'), 0)
+
+  const ret = await select({
+    [chanA]: a => ({ a }),
+    [chanB]: b => ({ b }),
+  })
+
+  t.deepEqual(ret, { b: 'test' })
+})
+
+
+test('blocking select on buffered channel', async t => {
   const chanA = makeChan({
     bufferSize: 2,
   })
@@ -25,7 +40,7 @@ test('blocking select', async t => {
   t.deepEqual(ret, { b: 'test' })
 })
 
-test('non-blocking select', async t => {
+test('non-blocking select on buffered channel', async t => {
   const chanA = makeChan({
     bufferSize: 2,
   })

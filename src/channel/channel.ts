@@ -48,7 +48,7 @@ class BlockingChannel<T> implements IChannel<T> {
   }
   
   select() {
-    if (this.value) {
+    if (this.value !== nil) {
       return {
         value: this.value,
         ok: true,
