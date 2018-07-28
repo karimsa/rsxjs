@@ -4,6 +4,16 @@
 
 <p align="center">Resilience Extensions for JS.</p>
 
+<p align="center">
+  <a href="https://travis-ci.org/karimsa/rsxjs">
+    <img src="https://travis-ci.org/karimsa/rsxjs.svg?branch=master" alt="Build Status">
+  </a>
+
+  <a href="https://codecov.io/gh/karimsa/rsxjs">
+    <img src="https://codecov.io/gh/karimsa/rsxjs/branch/master/graph/badge.svg" alt="Coverage">
+  </a>
+</p>
+
 **Table of Contents:**
 
  - [TL;DR](#tldr)
