@@ -45,10 +45,11 @@
   },
   "ava": {
     "cache": true,
-    "timeout": "4s",
+    "timeout": "10s",
     "files": [
       "tests/**/test-*.js"
     ],
+    "concurrency": 4,
     "compileEnhancements": true,
     "require": [
       "@babel/register",
