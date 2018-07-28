@@ -196,6 +196,11 @@ export class Channel<T> implements IChannel<T> {
   }
   
   async take(timeout?: number): Promise<T> {
+    const { value, ok } = this.select()
+    if (ok) {
+      return value as T
+    }
+    
     return this.attempt(
       () => this.chan.take(),
       timeout,
