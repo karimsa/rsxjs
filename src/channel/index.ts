@@ -4,3 +4,4 @@
  */
 
 export * from './channel'
+export * from './select'

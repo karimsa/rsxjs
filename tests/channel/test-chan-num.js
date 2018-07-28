@@ -4,11 +4,11 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-const { Channel } = require('../../')
+const { makeChan } = require('../../')
 const { test } = require('ava')
 
 test('chan: unbuffered number', async t => {
-  const c = new Channel()
+  const c = makeChan()
   const r = Math.random()
   const p = c.take()
   await c.put(r)
@@ -16,7 +16,7 @@ test('chan: unbuffered number', async t => {
 })
 
 test('chan: buffered number', async t => {
-  const c = new Channel({
+  const c = makeChan({
     bufferSize: 1,
   })
   const r = Math.random()
@@ -26,7 +26,7 @@ test('chan: buffered number', async t => {
 })
 
 test('chan: buffered then unbuffered', async t => {
-  const c = new Channel({
+  const c = makeChan({
     bufferSize: 1,
   })
   const r1 = Math.random()

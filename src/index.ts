@@ -16,7 +16,9 @@ export {
 } from './waitgroup'
 
 export {
-  Channel,
+  makeChan,
+  select,
+  chan,
 } from './channel'
 
 export {

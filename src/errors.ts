@@ -5,3 +5,4 @@
 
 export const COULD_NOT_LOCK = 'Unable to obtain lock'
 export const TIMEOUT = 'Operation timed out'
+export const CLOSED_CHAN = 'Cannot operate on a closed channel'
