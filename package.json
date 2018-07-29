@@ -4,7 +4,7 @@
   "description": "Resilience Extensions for JS.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "ava -v",
+    "test": "nyc ava -v",
     "build": "rollup -c",
     "coverage": "codecov"
   },
@@ -37,6 +37,7 @@
     "bluebird": "^3.5.1",
     "codecov": "^3.0.4",
     "lolex": "^2.7.1",
+    "nyc": "^12.0.2",
     "rollup": "^0.63.4",
     "rollup-plugin-babel": "^4.0.0-beta.7",
     "rollup-plugin-typescript2": "^0.16.1",

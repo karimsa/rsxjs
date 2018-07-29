@@ -2,4 +2,5 @@ dist
 node_modules
 *.log
 .rpt2_cache
-
+.nyc_output
+coverage
