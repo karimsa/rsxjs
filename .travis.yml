@@ -10,7 +10,7 @@ script:
 - npm run coverage
 before_deploy:
 - npm run clean
-- NODE_ENV=development npm run build
+- NODE_ENV=production npm run build
 deploy:
   provider: npm
   email: karim@alibhai.co
