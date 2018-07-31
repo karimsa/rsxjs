@@ -62,7 +62,7 @@ range over all possible values in a channel until it closes, you can do somethin
 ```typescript
 const names = makeChan<string>()
 
-for await (const name of name) {
+for await (const name of names) {
   console.log(`hello, ${name}`)
 }
 ```
