@@ -16,55 +16,72 @@ export interface Cancelable<T> extends Promise<T> {
   cancel(): Promise<boolean>
 }
 
-export function co<T>(fn: (defer: DeferFunction) => Iterator<any>): Cancelable<T> {
-  const state: {
-    isCanceled: boolean
-    isDone: null | boolean
-    onCancel: ((isDone: boolean) => void)[]
-  } = {
-    isCanceled: false,
-    isDone: null,
-    onCancel: [],
-  }
+type Wrappable<T> = (...args: any[]) => Cancelable<T>
 
-  const p: Cancelable<T> = Deferral.fromAsync(async function routine(defer): Promise<T | void> {
-    const it = fn(defer)
-    let lastValue: any
-
-    // run individual steps until completion, each result is awaited and passed
-    // onto the next step - so anything can be yielded from the generator
-    // the actual runtime that will be used is regenerator-runtime until node v6
-    // goes EOL, this just wraps it
-    while (!state.isCanceled) {
-      const {
-        done,
-        value,
-      } = it.next(lastValue)
-      lastValue = await value
-
-      if (done) {
-        state.isDone = true
-        return lastValue
-      }
+function wrap<T, F extends Wrappable<T> = Wrappable<T>, G = any>(
+  fn: (defer: DeferFunction, ...args: any[]) => Iterator<any>
+): F {
+  function go(this: G, ...args: any[]): Cancelable<T> {
+    const state: {
+      isCanceled: boolean
+      isDone: null | boolean
+      onCancel: ((isDone: boolean) => void)[]
+    } = {
+      isCanceled: false,
+      isDone: null,
+      onCancel: [],
     }
 
-    state.isDone = false
+    const ctx = this
+    const p: Cancelable<T> = Deferral.fromAsync(async function routine(defer): Promise<T | void> {
+      const it = fn.call(ctx, defer, ...args)
+      let lastValue: any
 
-    for (const resolve of state.onCancel) {
-      resolve(state.isDone)
-    }
-  })() as any
-
-  p.cancel = function () {
-    state.isCanceled = true
-    return new Promise<boolean>(resolve => {
-      if (state.isDone !== null) {
-        return resolve(state.isDone)
+      // run individual steps until completion, each result is awaited and passed
+      // onto the next step - so anything can be yielded from the generator
+      // the actual runtime that will be used is regenerator-runtime until node v6
+      // goes EOL, this just wraps it
+      while (!state.isCanceled) {
+        const {
+          done,
+          value,
+        } = it.next(lastValue)
+        lastValue = await value
+  
+        if (done) {
+          state.isDone = true
+          return lastValue
+        }
       }
-
-      state.onCancel.push(resolve)
-    })
+  
+      state.isDone = false
+  
+      for (const resolve of state.onCancel) {
+        resolve(state.isDone)
+      }
+    })() as any
+  
+    p.cancel = function () {
+      state.isCanceled = true
+      return new Promise<boolean>(resolve => {
+        if (state.isDone !== null) {
+          return resolve(state.isDone)
+        }
+  
+        state.onCancel.push(resolve)
+      })
+    }
+  
+    return p
   }
 
-  return p
+  return go as any
 }
+
+function runRoutine<T>(fn: (defer: DeferFunction) => Iterator<any>): Cancelable<T> {
+  return wrap<T>(fn)()
+}
+
+export const co: {
+  wrap: typeof wrap
+} & typeof runRoutine = Object.assign(runRoutine, { wrap })
