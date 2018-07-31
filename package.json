@@ -50,8 +50,6 @@
     "files": [
       "tests/**/test-*.js"
     ],
-    "concurrency": 4,
-    "compileEnhancements": true,
     "require": [
       "@babel/register",
       "@babel/polyfill"
