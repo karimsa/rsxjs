@@ -3,8 +3,8 @@
 Channels (based on golang's channel concept) are a data structure that allow for
 synchronized communication. The concept is very similar to the idea of a javascript
 stream but with easier to use backpressure support. To learn more about the actual
-concept of a channel, I recommend checking out [Effective Go]() and also
-[Async Iterators vs. Communicating Sequential Processes]().
+concept of a channel, I recommend checking out [Effective Go](https://golang.org/doc/effective_go.html#channels) and also
+[Async Iterators vs. Communicating Sequential Processes](http://2ality.com/2017/03/csp-vs-async-generators.html).
 
  - [API](#api)
  - [The Cool Stuff](#the-cool-stuff)
@@ -126,4 +126,4 @@ if (!ok) {
 ## Prior Art
 
  - [asyncquence](https://github.com/getify/asyncquence)
- - [async-csp](https://github.com/.../async-csp)
+ - [async-csp](https://github.com/dvlsg/async-csp)
