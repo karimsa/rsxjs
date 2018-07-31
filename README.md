@@ -19,6 +19,8 @@
  - [TL;DR](#tldr)
  - [Getting Started](#getting-started)
    - [Circuit Breakers](docs/breaker.md)
+   - [Channels](docs/channel.md)
+   - [Coroutines](docs/coroutine.md)
    - [Deferral](docs/deferral.md)
    - [Fallback](docs/fallback.md)
    - [Mutexes](docs/mutex.md)
