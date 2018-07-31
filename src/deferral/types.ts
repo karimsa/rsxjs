@@ -6,7 +6,7 @@
 import createDebug from 'debug'
 const debug = createDebug('rsxjs')
 
-export type AsyncDeferral<T> = (defer: DeferFunction, ...args: any[]) => T
+export type AsyncDeferral<T> = (defer: DeferFunction, ...args: any[]) => Promise<T>
 
 export type CleanupFunction = () => Promise<void> | void
 export type DeferFunction = (cleanup: CleanupFunction) => void
