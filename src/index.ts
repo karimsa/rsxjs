@@ -34,3 +34,11 @@ export {
   Fallback,
   Deferral,
 }
+
+// for unit testing
+import * as utils from './utils'
+if (process.env.NODE_ENV === 'test') {
+  Object.assign(exports, {
+    ...utils,
+  })
+}
