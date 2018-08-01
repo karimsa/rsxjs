@@ -15,7 +15,7 @@ concept of a channel, I recommend checking out [Effective Go](https://golang.org
 #### `makeChan([options])`
 
  - **options** (object; optional):
-  - **bufferSize** (positive integer or zero): the size of the internal buffer to use
+    - **bufferSize** (positive integer or zero): the size of the internal buffer to use
 
 Returns an instance of `Channel<T>` ready to use.
 
@@ -25,22 +25,27 @@ instances of `Channel` also behave as symbols - which requires a union between
 the class type and `symbol`. rsxjs does the type join for you when using `makeChan()`
 while simply proxying the channel constructor in a type safe way.*
 
-#### `Channel.prototype.put(value: T): Promise<void>`
+#### `Channel.prototype.put(value: T, timeout?: number): Promise<{ ok: boolean }>`
 
  - **value** (T): value to push into the channel.
+ - **timeout** (optional number): if provided, waits for a maximum of this amount of ms
+ before exiting with `ok` as `false`.
 
-Returns a promise that resolves successfully once successfully written to the channel
-or buffer.
+Returns a promise that resolves to an object with a single key - `ok` which will be
+`true` if the value was successfully written to the channel or buffer. If the operation
+times out, `ok` will be `false` but it will not throw an error.
+
 Throws an error if the channel is already closed.
 
-#### `Channel.prototype.take(timeout?: number): Promise<T>`
+#### `Channel.prototype.take(timeout?: number): Promise<{ ok: boolean, value?: T }>`
 
- - **timeout** (optional number): if provided, wraps the underlying take operation with
- a cancelable timeout. If the timeout surpasses, the `take()` will throw an error. This
- will not cause the discarding of an underlying value should it be later made available
- since the operation is canceled.
+ - **timeout** (optional number): if provided, waits for a maximum of this amount of ms
+ before exiting with `ok` as `false`.
 
-Returns a promise that resolves to the next value in the channel.
+Returns a promise that resolves to the next value as `value` and whether or not the operation
+was successful using `ok` in the channel.
+
+Will throw an error if the channel is closed and there is nothing left in the buffer.
 
 #### `Channel.prototype.select(): { ok: boolean, value?: T }`
 
