@@ -6,9 +6,10 @@
 
 import { typeCheck } from '@foko/type-check'
 
-import { isDefined } from '../utils'
-import * as Timeout from '../timeout'
 import * as Errors from '../errors'
+import { isDefined, delay } from '../utils'
+import * as Timeout from '../timeout'
+import { Deferred, defer } from '../types'
 
 interface IChannel<T> {
   select(): {
@@ -24,34 +25,42 @@ interface ChannelConfig {
   pollInterval: number
 }
 
-const nil = {} as any
-
 class BlockingChannel<T> implements IChannel<T> {
-  private value: T = nil
-  
+  private buffer: {
+    value: T
+    p: Deferred<void>
+  }[] = []
+
   constructor(
     private readonly config: ChannelConfig
   ) {}
-  
+
   async put(value: T): Promise<void> {
-    return this.poll(false).then(() => {
-      this.value = value
+    const p = defer<void>()
+    this.buffer.push({
+      value,
+      p,
     })
+    return p.promise
   }
-  
+
   async take(): Promise<T> {
-    return this.poll(true).then(() => {
-      const v = this.value
-      this.value = nil
-      return v
-    })
+    const { value, ok } = this.select()
+    if (ok) {
+      return value as T
+    }
+
+    await delay(this.config.pollInterval)
+    return this.take()
   }
-  
+
   select() {
-    if (this.value !== nil) {
+    const b = this.buffer.shift()
+    if (b) {
+      b.p.resolve()
       return {
-        value: this.value,
         ok: true,
+        value: b.value,
       }
     }
 
@@ -59,25 +68,11 @@ class BlockingChannel<T> implements IChannel<T> {
       ok: false,
     }
   }
-
-  private poll(shouldExist: boolean): Promise<void> {
-    const exists = this.value !== nil
-    if (shouldExist === exists) {
-      return Promise.resolve()
-    }
-    
-    return new Promise((resolve, reject) => {
-      setTimeout(() => {
-        this.poll(shouldExist)
-          .then(resolve, reject)
-      }, this.config.pollInterval)
-    })
-  }
 }
 
 class BufferedChannel<T> implements IChannel<T> {
   private readonly buffer: T[] = []
-  
+
   constructor(
     private readonly config: ChannelConfig
   ) {}
@@ -166,7 +161,7 @@ export class Channel<T> implements IChannel<T> {
       this.chan = new BlockingChannel(config)
     }
   }
-  
+
   close(): void {
     this.isOpen = false
     delete Channel.chanMap[this.selectSymbol as any]
