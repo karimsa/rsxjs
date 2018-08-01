@@ -13,10 +13,7 @@ import { after as timeoutAfter } from '../timeout/after'
 import { Deferred, defer } from '../types'
 
 interface IChannel<T> {
-  select(): {
-    value?: T
-    ok: boolean
-  }
+  select(): TakeResult<T>
   take(timeout?: number): Promise<T>
   put(value: T, timeout?: number): Promise<void>
 }
@@ -89,13 +86,10 @@ class BufferedChannel<T> implements IChannel<T> {
   
   async put(v: T): Promise<void> {
     if (this.buffer.length === this.config.bufferSize) {
-      return new Promise<void>((resolve, reject) => {
-        setTimeout(() => {
-          this.put(v).then(resolve, reject)
-        }, 0)
-      })
+      await delay(this.config.pollInterval)
+      return this.put(v)
     }
-    
+
     this.buffer.push(v)
   }
   
