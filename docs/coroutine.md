@@ -72,7 +72,7 @@ const p = co(function* (defer) {
   await server.listen(fd)
   defer(() => server.close())
 
-  for await (const sock of range(socks)) {
+  for await (const sock of socks) {
     // do something with the sock
   }
 })
