@@ -6,6 +6,9 @@
 import * as Errors from '../errors'
 import { Deferred, defer, Lock, ReleaseLock } from '../types'
 
+import createDebugger from 'debug'
+const debug = createDebugger('rsxjs:mutex')
+
 export class Mutex extends Lock {
   /**
    * For a mutex, the state is simply binary so we can use
@@ -34,8 +37,10 @@ export class Mutex extends Lock {
       const req = this.requests.shift()
 
       if (req) {
+        debug(`passing mutex onto next listener`)
         req.resolve(req.unlock)
       } else {
+        debug(`unlocked mutex`)
         this.unref()
         this._locked = false
       }
@@ -45,6 +50,7 @@ export class Mutex extends Lock {
     this._locked = true
 
     if (!wasLocked) {
+      debug(`locked mutex`)
       this.ref()
       return unlock
     }
