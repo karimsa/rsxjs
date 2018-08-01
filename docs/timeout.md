@@ -7,6 +7,14 @@ Timeouts are one of the simplest components utilized for failing fast. They allo
 Available methods:
 
  - `fromAsync(asyncFunction, [options])`
+ - `after(timeout)`
+
+### `after(timeout: number): chan<void>`
+
+ - **timeout** (number): the name says it all.
+
+Returns a channel that outputs a single value after the `timeout` ms has elapsed. The channel
+will be closed after the single emit.
 
 ### Options
 

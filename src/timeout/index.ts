@@ -5,3 +5,4 @@
 
 export * from './from-async'
 export * from './from-promise'
+export * from './after'
