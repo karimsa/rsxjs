@@ -7,6 +7,8 @@
 import createDebugger from 'debug'
 const debug = createDebugger('rsxjs:utils')
 
+import { defer } from './types'
+
 export function isDefined<T>(v: T | undefined | null): v is T {
   return (
     v !== undefined &&
@@ -47,4 +49,15 @@ export function debounce<T extends Function>(fn: T, timeout: number): T {
 
 export function delay(timeout: number): Promise<void> {
   return new Promise(resolve => setTimeout(() => resolve(), timeout))
+}
+
+export function any(p: Promise<any>[]): Promise<[number, any]> {
+  const d = defer<[number, any]>()
+  for (let i = 0; i < p.length; ++i) {
+    p[i].then(
+      v => d.resolve([i, v]),
+      d.reject,
+    )
+  }
+  return d.promise
 }

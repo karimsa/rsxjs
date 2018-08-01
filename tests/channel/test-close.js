@@ -17,12 +17,12 @@ test('should not be able to read/write on a closed channel', async t => {
 
 test('should be able to read off a closed channel with an unflushed buffer', async t => {
   const c = makeChan({ bufferSize: 2 })
-  await c.put('a')
-  await c.put('b')
+  t.deepEqual(await c.put('a'), { ok: true })
+  t.deepEqual(await c.put('b'), { ok: true })
   c.close()
 
-  t.is(await c.take(), 'a')
-  t.is(await c.take(), 'b')
+  t.deepEqual(await c.take(), { ok: true, value: 'a' })
+  t.deepEqual(await c.take(), { ok: true, value: 'b' })
 
   t.is(String(await t.throws(c.put(0))), 'Error: Cannot operate on a closed channel')
   t.is(String(await t.throws(c.take())), 'Error: Cannot operate on a closed channel')

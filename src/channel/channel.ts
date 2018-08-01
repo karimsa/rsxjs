@@ -6,9 +6,10 @@
 
 import { typeCheck } from '@foko/type-check'
 
+import { select } from './select'
 import * as Errors from '../errors'
-import { isDefined, delay } from '../utils'
-import * as Timeout from '../timeout'
+import { isDefined, delay, any } from '../utils'
+import { after as timeoutAfter } from '../timeout/after'
 import { Deferred, defer } from '../types'
 
 interface IChannel<T> {
@@ -23,6 +24,15 @@ interface IChannel<T> {
 interface ChannelConfig {
   bufferSize: number
   pollInterval: number
+}
+
+interface PutResult {
+  ok: boolean
+}
+
+interface TakeResult<T> {
+  value?: T
+  ok: boolean
 }
 
 class BlockingChannel<T> implements IChannel<T> {
@@ -115,8 +125,8 @@ class BufferedChannel<T> implements IChannel<T> {
   }
 }
 
-export class Channel<T> implements IChannel<T> {
-  private readonly chan: IChannel<T>
+export class Channel<T> {
+  private readonly chan: IChannel<T> & symbol
   private isOpen: boolean = true
   private selectSymbol = Symbol()
 
@@ -154,11 +164,11 @@ export class Channel<T> implements IChannel<T> {
     if (isDefined(c.pollInterval)) {
       config.pollInterval = c.pollInterval as any
     }
-    
+
     if (config.bufferSize > 0) {
-      this.chan = new BufferedChannel(config)
+      this.chan = new BufferedChannel(config) as any
     } else {
-      this.chan = new BlockingChannel(config)
+      this.chan = new BlockingChannel(config) as any
     }
   }
 
@@ -166,40 +176,43 @@ export class Channel<T> implements IChannel<T> {
     this.isOpen = false
     delete Channel.chanMap[this.selectSymbol as any]
   }
-
-  private attempt<G>(makeP: () => Promise<G>, timeout?: number): Promise<G> {
+  
+  async put(value: T, timeout?: number): Promise<PutResult> {
     if (!this.isOpen) {
       throw new Error(Errors.CLOSED_CHAN)
     }
 
-    const p = makeP()
+    if (!isDefined(timeout)) {
+      await this.chan.put(value)
+      return { ok: true }
+    }
 
-    if (isDefined(timeout)) {
-      return Timeout.fromPromise(p,{
-        timeout
-      })
-    }
-    
-    return p
+    const [i] = await any([
+      this.chan.put(value),
+      timeoutAfter(timeout).take(),
+    ])
+    return { ok: i === 0 }
   }
-  
-  async put(value: T, timeout?: number): Promise<void> {
-    return this.attempt(
-      () => this.chan.put(value),
-      timeout
-    )
-  }
-  
-  async take(timeout?: number): Promise<T> {
-    const { value, ok } = this.select()
+
+  async take(timeout?: number): Promise<TakeResult<T>> {
+    const { value, ok } = this.chan.select()
     if (ok) {
-      return value as T
+      return { value, ok }
     }
-    
-    return this.attempt(
-      () => this.chan.take(),
-      timeout,
-    )
+
+    if (!this.isOpen) {
+      throw new Error(Errors.CLOSED_CHAN)
+    }
+
+    if (!isDefined(timeout)) {
+      const value = await this.chan.take()
+      return { value, ok: true }
+    }
+
+    return select({
+      [this.chan]: (value: T) => ({ value, ok: true }),
+      [timeoutAfter(timeout)]: () => ({ ok: false }),
+    })
   }
 
   select() {
@@ -208,7 +221,8 @@ export class Channel<T> implements IChannel<T> {
 
   private async* range(): AsyncIterableIterator<T> {
     while (this.isOpen) {
-      yield await this.take()
+      const { value } = await this.take()
+      yield value as T
     }
 
     while (true) {

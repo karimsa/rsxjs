@@ -4,24 +4,22 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-const { makeChan } = require('../../')
-const { test } = require('ava')
+import { test } from 'ava'
 
-test('put then take', async t => {
+import { makeChan } from '../../'
+
+test('put with no take', async t => {
   const c = makeChan()
   const r = Math.random()
-
-  // timeout, no one is waiting
-  const e = await t.throws(c.put(r, 100))
-  t.is(String(e), 'Error: Operation timed out')
+  t.deepEqual(await c.put(r, 100), { ok: false })
 })
 
 test('chan: unbuffered number', async t => {
   const c = makeChan()
   const r = Math.random()
   const p = c.take()
-  await c.put(r)
-  t.is(await p, r)
+  t.deepEqual(await c.put(r), { ok: true })
+  t.deepEqual(await p, { ok: true, value: r })
 })
 
 test('chan: buffered number', async t => {
@@ -29,9 +27,9 @@ test('chan: buffered number', async t => {
     bufferSize: 1,
   })
   const r = Math.random()
-  
-  await c.put(r)
-  t.is(await c.take(), r)
+
+  t.deepEqual(await c.put(r), { ok: true })
+  t.deepEqual(await c.take(), { ok: true, value: r })
 })
 
 test('chan: buffered then unbuffered', async t => {
@@ -41,13 +39,10 @@ test('chan: buffered then unbuffered', async t => {
   const r1 = Math.random()
   const r2 = Math.random()
   
-  await c.put(r1)
-  const err = await t.throws(c.put(r2, 10))
-  t.is(String(err), 'Error: Operation timed out')
-  
-  t.is(await c.take(), r1)
-  t.is(await c.take(), r2)
-  
-  const takeErr = await t.throws(c.take(10))
-  t.is(String(takeErr), 'Error: Operation timed out')
+  t.deepEqual(await c.put(r1), { ok: true })
+  t.deepEqual(await c.put(r2, 10), { ok: false })
+
+  t.deepEqual(await c.take(), { ok: true, value: r1 })
+  t.deepEqual(await c.take(), { ok: true, value: r2 })
+  t.deepEqual(await c.take(10), { ok: false })
 })
