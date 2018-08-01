@@ -7,6 +7,15 @@
 const { makeChan } = require('../../')
 const { test } = require('ava')
 
+test('put then take', async t => {
+  const c = makeChan()
+  const r = Math.random()
+
+  // timeout, no one is waiting
+  const e = await t.throws(c.put(r, 100))
+  t.is(String(e), 'Error: Operation timed out')
+})
+
 test('chan: unbuffered number', async t => {
   const c = makeChan()
   const r = Math.random()
