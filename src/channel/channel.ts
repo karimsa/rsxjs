@@ -126,7 +126,7 @@ export class Channel<T> {
   // this makes the select() magic work
   private selectSymbol = Symbol()
   private static chanMap: { [key in any]: Channel<any> } = {}
-
+  
   ;[Symbol.toPrimitive]() { return this.selectSymbol }
 
   static getChannel<T>(sym: symbol): chan<T> {
@@ -231,16 +231,40 @@ export class Channel<T> {
     }
   }
 
-  [Symbol.asyncIterator]() {
-    return this.range()
+  private readOnlyChan?: ReadOnlyChannel<T>
+  readOnly(): ReadOnlyChannel<T> {
+    return (this.readOnlyChan = this.readOnlyChan || new ReadOnlyChannel(this))
   }
 
-  [Symbol.toPrimitive]() {
-    return this.selectSymbol
+  private writeOnlyChan?: WriteOnlyChannel<T>
+  writeOnly(): WriteOnlyChannel<T> {
+    return (this.writeOnlyChan = this.writeOnlyChan || new WriteOnlyChannel(this))
   }
 }
 
+export class ReadOnlyChannel<T> {
+  constructor(
+    private readonly chan: Channel<T>,
+  ) {}
+
+  take() { return this.chan.take() }
+  select() { return this.chan.select() }
+  [Symbol.asyncIterator]() { return this.chan[Symbol.asyncIterator]() }
+  [Symbol.toPrimitive]() { return this.chan[Symbol.toPrimitive]() }
+}
+
+export class WriteOnlyChannel<T> {
+  constructor(
+    private readonly chan: Channel<T>,
+  ) {}
+
+  put(value: T, timeout?: number) { return this.chan.put(value, timeout) }
+}
+
+export type readOnlyChan<T> = ReadOnlyChannel<T> & symbol
+export type writeOnlyChan<T> = WriteOnlyChannel<T> & symbol
 export type chan<T> = Channel<T> & symbol
+
 export function makeChan<T>(opts?: Partial<ChannelConfig>): chan<T> {
   return new Channel(opts) as any
 }
