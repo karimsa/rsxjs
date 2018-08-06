@@ -122,11 +122,12 @@ class BufferedChannel<T> implements IChannel<T> {
 export class Channel<T> {
   private readonly chan: IChannel<T> & symbol
   private isOpen: boolean = true
-  private selectSymbol = Symbol()
 
-  private static chanMap: {
-    [key in any]: Channel<any>
-  } = {}
+  // this makes the select() magic work
+  private selectSymbol = Symbol()
+  private static chanMap: { [key in any]: Channel<any> } = {}
+
+  ;[Symbol.toPrimitive]() { return this.selectSymbol }
 
   static getChannel<T>(sym: symbol): chan<T> {
     const chan = Channel.chanMap[sym as any]
@@ -213,7 +214,7 @@ export class Channel<T> {
     return this.chan.select()
   }
 
-  private async* range(): AsyncIterableIterator<T> {
+  async* [Symbol.asyncIterator](): AsyncIterableIterator<T> {
     while (this.isOpen) {
       const { value } = await this.take()
       yield value as T
