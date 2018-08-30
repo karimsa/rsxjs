@@ -259,11 +259,12 @@ export class WriteOnlyChannel<T> {
   ) {}
 
   put(value: T, timeout?: number) { return this.chan.put(value, timeout) }
+  close() { return this.chan.close() }
 }
 
 export type readOnlyChan<T> = ReadOnlyChannel<T> & symbol
 export type writeOnlyChan<T> = WriteOnlyChannel<T> & symbol
-export type chan<T> = Channel<T> & symbol
+export type chan<T> = Channel<T> & readOnlyChan<T> & writeOnlyChan<T> & symbol
 
 export function makeChan<T>(opts?: Partial<ChannelConfig>): chan<T> {
   return new Channel(opts) as any

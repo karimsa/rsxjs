@@ -7,6 +7,7 @@ concept of a channel, I recommend checking out [Effective Go](https://golang.org
 [Async Iterators vs. Communicating Sequential Processes](http://2ality.com/2017/03/csp-vs-async-generators.html).
 
  - [API](#api)
+ - [Reading vs. Writing](#reading-vs-writing)
  - [The Cool Stuff](#the-cool-stuff)
  - [Prior Art](#prior-art)
 
@@ -57,6 +58,23 @@ value.
 
 Synchronously closes the channel. After this point, you cannot write values to the channel.
 Reading is still possible until all values are read off.
+
+## Reading vs. Writing
+
+To ensure type safety, you may wish to pass read-only or write-only copies of your channel
+down to the processes that are using your channel. You can do this with a purely compile-time
+type cast if you are using TypeScript or you can use the built-in wrappers if you are using
+JavaScript. Here's some examples.
+
+### Creating a ReadOnly Channel with TS
+
+```typescript
+import { makeChan, ReadOnlyChannel } from 'rsxjs'
+
+async function chanReader(chan: ReadOnlyChannel<number>): Promise<void> {
+  // this function will only be able to 
+}
+```
 
 ## The Cool Stuff
 

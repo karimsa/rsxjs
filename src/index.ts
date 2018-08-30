@@ -16,11 +16,11 @@ export {
 } from './waitgroup'
 
 export {
-  chan,
+  chan as Channel,
   select,
   makeChan,
-  readOnlyChan,
-  writeOnlyChan,
+  readOnlyChan as ReadOnlyChannel,
+  writeOnlyChan as WriteOnlyChannel,
 } from './channel'
 
 export {
