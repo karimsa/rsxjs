@@ -10,6 +10,7 @@ import * as Semaphore from './semaphore'
 import * as Timeout from './timeout'
 import * as Fallback from './fallback'
 import * as Deferral from './deferral'
+import * as Cache from './cache'
 
 export {
   WaitGroup,
@@ -35,6 +36,7 @@ export {
   Timeout,
   Fallback,
   Deferral,
+  Cache,
 }
 
 // for unit testing

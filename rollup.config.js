@@ -15,6 +15,7 @@ export default {
   output: {
     format: 'cjs',
     file: 'dist/index.js',
+    sourcemap: true,
   },
 
   external: [].concat(
