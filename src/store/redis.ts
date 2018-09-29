@@ -15,12 +15,20 @@ export class RedisStore implements Store {
     this.redis = new (require('ioredis'))(options)
   }
 
-  get(key: string): Promise<string> {
-    return this.redis.get(key)
+  async get<T>(key: string): Promise<T> {
+    return JSON.parse(await this.redis.get(key))
   }
 
-  async set(key: string, value: string): Promise<void> {
-    await this.redis.set(key, value)
+  async set<T>(key: string, value: T): Promise<void> {
+    await this.redis.set(key, JSON.stringify(value))
+  }
+
+  async setnx<T>(key: string, value: T): Promise<boolean> {
+    if (await this.redis.set(key, JSON.stringify(value), 'nx') === null) {
+      return false
+    }
+
+    return true
   }
 
   del(key: string): Promise<void> {

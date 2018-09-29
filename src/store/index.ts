@@ -6,3 +6,4 @@
 
 export * from './store'
 export * from './redis'
+export * from './memory'
