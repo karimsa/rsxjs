@@ -6,8 +6,16 @@
 
 import { Store } from './store'
 
+// use a universal map to stay consistent with distributed
+// maps like redis
+let map: Map<string, any>
+
 export class MemoryStore implements Store {
-  private readonly map = new Map()
+  private readonly map: Map<string, any>
+
+  constructor() {
+    this.map = map = map || new Map()
+  }
 
   async get<T>(key: string): Promise<T> {
     return this.map.get(key)
