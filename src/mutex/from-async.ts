@@ -5,16 +5,16 @@
 
 import { Mutex } from './mutex'
 import { AsyncFunction } from '../types'
-import { defaults, MutexOptionsGiven } from './types'
+import { MutexOptions } from './types'
 
 export function fromAsync<T>(
   fn: AsyncFunction<T>,
-  options?: MutexOptionsGiven
+  options?: MutexOptions
 ): AsyncFunction<T> {
-  const m = new Mutex()
+  const m = new Mutex(options)
 
   return async function mutexWrappedFunction(this: any, ...args: any[]): Promise<T> {
-    const unlock = await m.lock(defaults(options).failFast)
+    const unlock = await m.lock()
 
     try {
       const result = await fn.apply(this, args)

@@ -54,7 +54,5 @@ export abstract class Lock extends Referred {
   protected requests: (Deferred<ReleaseLock> & {
     unlock: ReleaseLock
   })[] = []
-
-  abstract isLocked(): boolean
   abstract lock(failWithoutLock: boolean): Promise<ReleaseLock>
 }
