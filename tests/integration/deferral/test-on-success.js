@@ -19,3 +19,22 @@ test('on success', async t => {
   t.is(await op(), undefined)
   t.true(fn.calledOnce)
 })
+
+test('on success with generator', async t => {
+  const fn = spy(() => {})
+  const op = Deferral.fromGenerator(function*( defer ) {
+    defer(fn)
+
+    t.is(1, yield 1)
+    t.is(2, yield Promise.resolve(2))
+
+    try {
+      yield Promise.reject(new Error('blah'))
+    } catch (err) {
+      t.not(String(err).indexOf('blah'), -1)
+    }
+  })
+
+  t.is(await op(), undefined)
+  t.true(fn.calledOnce)
+})

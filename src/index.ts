@@ -28,6 +28,12 @@ export {
 } from './coroutine'
 
 export {
+  Store,
+  RedisStore,
+  MemoryStore,
+} from './store'
+
+export {
   Breaker,
   Mutex,
   Pool,

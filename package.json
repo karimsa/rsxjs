@@ -1,6 +1,6 @@
 {
   "name": "rsxjs",
-  "version": "0.1.0",
+  "version": "0.1.1-5",
   "description": "Resilience Extensions for JS.",
   "main": "dist/index.js",
   "scripts": {
@@ -33,7 +33,9 @@
     "@babel/preset-env": "^7.0.0-beta.54",
     "@babel/register": "^7.0.0-beta.54",
     "@types/debug": "0.0.30",
+    "@types/ioredis": "^4.0.1",
     "@types/node": "^10.5.2",
+    "@types/uuid": "^3.4.4",
     "ava": "^1.0.0-beta.3",
     "bluebird": "^3.5.1",
     "codecov": "^3.0.4",
@@ -67,8 +69,12 @@
       }
     }
   },
+  "optionalDependencies": {
+    "ioredis": "^4.0.0"
+  },
   "dependencies": {
     "@foko/type-check": "0.0.4",
-    "debug": "^3.1.0"
+    "debug": "^3.1.0",
+    "uuid": "^3.3.2"
   }
 }

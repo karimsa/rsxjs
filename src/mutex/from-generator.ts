@@ -1,14 +1,16 @@
 /**
- * @file src/mutex/from-async.ts
+ * @file src/mutex/from-generator.ts
+ * @description Wrap a mutex around a generator to create a coroutine.
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
 import { Mutex } from './mutex'
-import { AsyncFunction } from '../types'
+import { co } from '../coroutine'
 import { MutexOptions } from './types'
+import { AsyncFunction } from '../types'
 
-export function fromAsync<T>(
-  fn: AsyncFunction<T>,
+export function fromGenerator<T>(
+  fn: GeneratorFunction,
   options?: MutexOptions
 ): AsyncFunction<T> {
   const m = new Mutex(options)
@@ -17,12 +19,9 @@ export function fromAsync<T>(
     const unlock = await m.lock()
 
     try {
-      const result = await fn.apply(this, args)
+      return await co<T>(() => fn.apply(this, args))
+    } finally {
       unlock()
-      return result
-    } catch (err) {
-      unlock()
-      throw err
     }
   }
 }

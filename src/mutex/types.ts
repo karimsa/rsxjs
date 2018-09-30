@@ -3,24 +3,11 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { Store } from '../store'
+
 export interface MutexOptions {
-  failFast: boolean
-}
-
-export type MutexOptionsGiven = Partial<MutexOptions>
-
-const DefaultMutexOptions: MutexOptions = {
-  failFast: false,
-}
-
-export function defaults(options?: MutexOptionsGiven): MutexOptions {
-  const config: MutexOptions = DefaultMutexOptions
-
-  if (options) {
-    if (options.failFast !== undefined) {
-      config.failFast = !! options.failFast
-    }
-  }
-
-  return config
+  name?: string
+  failFast?: boolean
+  timeout?: number
+  store?: Store
 }
