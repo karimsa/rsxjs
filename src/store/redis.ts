@@ -22,7 +22,7 @@ export class RedisStore implements Store {
   async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
     if (options) {
       if (options.notExists && options.expires) {
-        await this.redis.set(key, JSON.stringify(value), 'NX', 'EX', options.expires)
+        await this.redis.set(key, JSON.stringify(value), 'NX', 'EX', Math.floor(options.expires / 1000))
         return
       }
 
@@ -32,7 +32,7 @@ export class RedisStore implements Store {
       }
 
       if (options.expires) {
-        await this.redis.set(key, JSON.stringify(value), 'EX', options.expires)
+        await this.redis.set(key, JSON.stringify(value), 'EX', Math.floor(options.expires / 1000))
         return
       }
     }
