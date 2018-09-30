@@ -24,8 +24,9 @@ test('on success with generator', async t => {
   const fn = spy(() => {})
   const op = Deferral.fromGenerator(function*( defer ) {
     defer(fn)
-    yield 1
-    yield 2
+
+    t.is(1, yield 1)
+    t.is(2, yield Promise.resolve(2))
   })
 
   t.is(await op(), undefined)

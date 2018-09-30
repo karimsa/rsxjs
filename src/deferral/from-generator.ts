@@ -19,7 +19,7 @@ export function fromGenerator<T>(fn: GeneratorFunction): AsyncFunction<T> {
 
       while (true) {
         const { value, done } = it.next(lastValue)
-        lastValue = value
+        lastValue = await value
 
         if (done) {
           break

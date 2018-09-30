@@ -41,6 +41,11 @@ test('Mutex#fromAsync', createTest('fromAsync', async function(frames) {
 }))
 
 test('Mutex#fromGenerator', createTest('fromGenerator', function*(frames) {
+  const r = Math.random()
+  if (r !== (yield r) || r !== (yield Promise.resolve(r))) {
+    throw new Error(`Mutex.fromGenerator() should return values in yields`)
+  }
+
   yield delay(DELAY + 1)
   frames.push(Date.now())
 }))
