@@ -27,6 +27,12 @@ test('on success with generator', async t => {
 
     t.is(1, yield 1)
     t.is(2, yield Promise.resolve(2))
+
+    try {
+      yield Promise.reject(new Error('blah'))
+    } catch (err) {
+      t.not(String(err).indexOf('blah'), -1)
+    }
   })
 
   t.is(await op(), undefined)

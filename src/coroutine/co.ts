@@ -36,6 +36,7 @@ function wrap<T, F extends Wrappable<T> = Wrappable<T>, G = any>(
     const p: Cancelable<T> = Deferral.fromAsync(async function routine(defer): Promise<T | void> {
       const it = fn.call(ctx, defer, ...args)
       let lastValue: any
+      let lastError: Error | void
 
       // run individual steps until completion, each result is awaited and passed
       // onto the next step - so anything can be yielded from the generator
@@ -45,8 +46,15 @@ function wrap<T, F extends Wrappable<T> = Wrappable<T>, G = any>(
         const {
           done,
           value,
-        } = it.next(lastValue)
-        lastValue = await value
+        } = lastError ? it.throw(lastError) : it.next(lastValue)
+
+        try {
+          lastValue = await value
+          lastError = undefined
+        } catch (err) {
+          lastValue = undefined
+          lastError = err
+        }
   
         if (done) {
           state.isDone = true

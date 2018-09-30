@@ -5,8 +5,9 @@
  */
 
 import { Mutex } from './mutex'
-import { AsyncFunction } from '../types'
+import { co } from '../coroutine'
 import { MutexOptions } from './types'
+import { AsyncFunction } from '../types'
 
 export function fromGenerator<T>(
   fn: GeneratorFunction,
@@ -18,19 +19,7 @@ export function fromGenerator<T>(
     const unlock = await m.lock()
 
     try {
-      const it = fn.apply(this, args)
-      let lastValue: any
-
-      while (true) {
-        const { value, done } = it.next(lastValue)
-        lastValue = await value
-
-        if (done) {
-          break
-        }
-      }
-
-      return lastValue
+      return await co<T>(() => fn.apply(this, args))
     } finally {
       unlock()
     }

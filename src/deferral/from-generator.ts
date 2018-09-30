@@ -3,6 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { co } from '../coroutine'
 import { AsyncFunction } from '../types'
 import { DeferredOperation } from './types'
 
@@ -14,19 +15,7 @@ export function fromGenerator<T>(fn: GeneratorFunction): AsyncFunction<T> {
     const deferral = new DeferredOperation()
 
     try {
-      const it = fn.call(this, deferral.defer.bind(deferral), ...args)
-      let lastValue: any
-
-      while (true) {
-        const { value, done } = it.next(lastValue)
-        lastValue = await value
-
-        if (done) {
-          break
-        }
-      }
-
-      return lastValue
+      return await co<T>(() => fn.call(this, deferral.defer.bind(deferral), ...args))
     } finally {
       debug(`unwinding deferred operations`)
       await deferral.cleanup()
