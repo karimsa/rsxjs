@@ -5,3 +5,4 @@
 
 export * from './from-async'
 export * from './from-generator'
+export * from './lock'
