@@ -6,7 +6,7 @@
 
 import { Redis, RedisOptions } from 'ioredis'
 
-import { Store } from './store'
+import { Store, SetOptions } from './store'
 
 export class RedisStore implements Store {
   private readonly redis: Redis
@@ -19,16 +19,25 @@ export class RedisStore implements Store {
     return JSON.parse(await this.redis.get(key))
   }
 
-  async set<T>(key: string, value: T): Promise<void> {
-    await this.redis.set(key, JSON.stringify(value))
-  }
+  async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
+    if (options) {
+      if (options.notExists && options.expires) {
+        await this.redis.set(key, JSON.stringify(value), 'NX', 'EX', options.expires)
+        return
+      }
 
-  async setnx<T>(key: string, value: T): Promise<boolean> {
-    if (await this.redis.set(key, JSON.stringify(value), 'nx') === null) {
-      return false
+      if (options.notExists) {
+        await this.redis.set(key, JSON.stringify(value), 'NX')
+        return
+      }
+
+      if (options.expires) {
+        await this.redis.set(key, JSON.stringify(value), 'EX', options.expires)
+        return
+      }
     }
 
-    return true
+    await this.redis.set(key, JSON.stringify(value))
   }
 
   del(key: string): Promise<void> {

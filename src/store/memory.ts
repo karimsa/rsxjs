@@ -4,7 +4,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { Store } from './store'
+import { Store, SetOptions } from './store'
 
 // use a universal map to stay consistent with distributed
 // maps like redis
@@ -21,17 +21,18 @@ export class MemoryStore implements Store {
     return this.map.get(key)
   }
 
-  async set<T>(key: string, value: T): Promise<void> {
-    this.map.set(key, value)
-  }
+  async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
+    if (options) {
+      if (options.notExists && this.map.has(key)) {
+        return
+      }
 
-  async setnx<T>(key: string, value: T): Promise<boolean> {
-    if (!this.map.has(key)) {
-      this.map.set(key, value)
-      return true
+      if (options.expires !== undefined) {
+        setTimeout(() => this.map.delete(key), options.expires)
+      }
     }
-    
-    return false
+
+    this.map.set(key, value)
   }
 
   async del(key: string): Promise<void> {

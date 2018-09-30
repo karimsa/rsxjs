@@ -8,5 +8,6 @@ import { Store } from '../store'
 export interface MutexOptions {
   name?: string
   failFast?: boolean
+  timeout?: number
   store?: Store
 }
