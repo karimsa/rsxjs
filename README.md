@@ -5,8 +5,8 @@
 <p align="center">Resilience Extensions for JS.</p>
 
 <p align="center">
-  <a href="https://travis-ci.org/karimsa/rsxjs">
-    <img src="https://travis-ci.org/karimsa/rsxjs.svg?branch=master" alt="Build Status">
+  <a href="https://semaphoreci.com/karimsa/rsxjs">
+    <img src="https://semaphoreci.com/api/v1/karimsa/rsxjs/branches/bkp/badge.svg" alt="Build Status">
   </a>
 
   <a href="https://codecov.io/gh/karimsa/rsxjs">
