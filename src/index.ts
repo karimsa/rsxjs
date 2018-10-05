@@ -45,10 +45,13 @@ export {
   Cache,
 }
 
-// for unit testing
+
+// for unit testing/debugging
 import * as utils from './utils'
+import { ConcurrentCache } from './cache/concurrent'
 if (process.env.NODE_ENV === 'test') {
   Object.assign(exports, {
     ...utils,
+    ConcurrentCache,
   })
 }
