@@ -4,7 +4,7 @@
   "description": "Resilience Extensions for JS.",
   "main": "dist/index.js",
   "scripts": {
-    "test": "node -r source-map-support/register node_modules/.bin/nyc ava -v",
+    "test": "node -r source-map-support/register node_modules/.bin/nyc node --expose_gc node_modules/.bin/ava -v",
     "build": "rollup -c",
     "clean": "rm -rf dist",
     "coverage": "codecov"
@@ -56,14 +56,16 @@
       "tests/**/test-*.js"
     ],
     "require": [
-      "@babel/register",
       "@babel/polyfill"
     ],
     "babel": {
       "testOptions": {
         "babelrc": false,
-        "only": [
+        "include": [
           "tests/**/*.js"
+        ],
+        "exclude": [
+          "tests/integration/cache/test-concurrent.js"
         ],
         "presets": [
           "@babel/preset-env"
