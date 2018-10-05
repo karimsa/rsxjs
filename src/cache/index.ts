@@ -4,15 +4,18 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { Cache } from './types'
 import * as Mutex from '../mutex'
 import { AsyncFunction } from '../types'
-import { Cache, CacheOptions } from './types'
 
-import { ConcurrentCache } from './concurrent'
+import { ConcurrentCache, ConcurrentCacheOptions } from './concurrent'
+
+type CacheOptions =
+  ({ type: 'concurrent' } & ConcurrentCacheOptions)
 
 function createCache(options: CacheOptions): Cache {
   switch (options.type) {
-    case 'concurrent': return new ConcurrentCache()
+    case 'concurrent': return new ConcurrentCache(options)
 
     default: throw new Error(`Unrecognized cache type: ${options.type}`)
   }

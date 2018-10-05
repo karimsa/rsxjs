@@ -5,39 +5,53 @@
  */
 
 import weak from 'weak'
+import createDebugger from 'debug'
+const debug = createDebugger('rsxjs')
 
 import { Cache } from './types'
 
 function createSweepListener(cache: ConcurrentCache, key: string): (() => void) {
-  return () => {
+  return function() {
+    debug('garbage collecting: %s', key)
     cache.remove(key)
   }
 }
 
+export interface ConcurrentCacheOptions {
+  expiry?: number
+}
+
 export class ConcurrentCache implements Cache {
-  private weakCache: {
-    [key: string]: any
-  } = {}
+  private readonly weakCache = new Map<string, any>()
+  private readonly expiry: number
+
+  constructor(options: ConcurrentCacheOptions) {
+    this.expiry = (options || {}).expiry || 1000
+  }
 
   async get<T>(key: string): Promise<{ value: void, ok: false } | { value: T, ok: true }> {
-    const weakRef = this.weakCache[key]
-    const ok = this.weakCache.hasOwnProperty(key) && !weak.isDead(this.weakCache[key])
-    
-    if (ok) {
+    const weakRef = this.weakCache.get(key)
+    if (this.weakCache.has(key) && !weak.isDead(weakRef)) {
       return {
-        ok,
+        ok: true,
         value: weak.get(weakRef) as any,
       }
     }
 
-    return { ok, value: undefined }
+    return {
+      ok: false,
+      value: undefined,
+    }
   }
 
   async set<T extends object>(key: string, value: T): Promise<void> {
-    this.weakCache[key] = weak(value, createSweepListener(this, key))
+    const sweep = createSweepListener(this, key)
+    this.weakCache.set(key, weak(value, sweep))
+    debug(`${key} will be forcefully swept in ${this.expiry}ms`)
+    setTimeout(sweep, this.expiry)
   }
 
   async remove(key: string): Promise<void> {
-    delete this.weakCache[key]
+    this.weakCache.delete(key)
   }
 }
