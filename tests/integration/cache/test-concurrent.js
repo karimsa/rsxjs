@@ -47,3 +47,22 @@ test('invalidation by gbc', t => co(function* () {
   const newResult = yield expensiveOperation()
   t.is(state.callCount, 2, 'Operation should be re-called after sweep')
 }))
+
+test('invalidation by timeout', t => co(function* () {
+  const expiry = 1000
+  const state = { callCount: 0 }
+  const expensiveOperation = Cache.fromAsync(underlyingOperation.bind(state), {
+    type: 'concurrent',
+    expiry,
+  })
+
+  yield createResults(t, expensiveOperation, yield expensiveOperation())
+  t.is(state.callCount, 1, 'Operation should only ever be called once')
+
+  // sweep should happen once delay ends
+  yield delay(expiry)
+
+  // now new calls should be made
+  const newResult = yield expensiveOperation()
+  t.is(state.callCount, 2, 'Operation should be re-called after sweep')
+}))
