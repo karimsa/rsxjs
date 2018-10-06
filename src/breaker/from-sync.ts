@@ -30,11 +30,6 @@ export function fromSync<T = any>(
   }
 
   return function syncBreaker(this: any, ...args: any[]): T {
-    const callback = args.pop()
-    if (typeof callback !== 'function') {
-      throw new Error(`Last argument should be a callback function, not ${typeof callback}`)
-    }
-
     if (
       state.numErrors >= options.maxErrors &&
       Date.now() - state.lastErrorTime < options.timeout
@@ -49,9 +44,9 @@ export function fromSync<T = any>(
       return result
     } catch (err) {
       ++state.numErrors
-      state.lastError = err
+      state.lastError = String(err.message || err).split('\n')[0]
       state.lastErrorTime = Date.now()
-      throw err
+      throw new Error(state.lastError)
     }
   }
 }
