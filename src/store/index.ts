@@ -4,6 +4,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-export * from './store'
-export * from './redis'
 export * from './memory'
+export * from './redis'
+export * from './state'
+export * from './store'
