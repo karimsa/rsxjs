@@ -4,52 +4,22 @@
  */
 
 import {
-  defaults,
-  BreakerState,
-  getBreakerState,
-  BreakerStateObject,
-  BreakerOptionsGiven,
-} from './types'
-import {
   AsyncFunction,
 } from '../types'
-
-import createDebug from 'debug'
-const debug = createDebug('rsxjs')
+import {
+  defaults,
+  CircuitBreaker,
+  BreakerOptionsGiven,
+} from './types'
 
 export function fromAsync<T = any>(
   originalFn: AsyncFunction<T>,
   _options?: BreakerOptionsGiven
 ): AsyncFunction<T> {
   const options = defaults(_options)
-  const state: BreakerStateObject = {
-    numErrors: 0,
-    lastError: undefined,
-    lastErrorTime: 0,
-  }
+  const breaker = new CircuitBreaker<T>(options)
 
-  return async function asyncBreaker(...args: any[]): Promise<T> {
-    const breakerState = getBreakerState(state, options)
-    debug('breaker state => %s', breakerState)
-
-    if (breakerState === BreakerState.CLOSED) {
-      throw state.lastError
-    }
-
-    try {
-      const retValue = await originalFn(...args)
-
-      state.numErrors = 0
-      state.lastError = undefined
-      state.lastErrorTime = 0
-
-      return retValue
-    } catch (err) {
-      ++state.numErrors
-      state.lastError = err
-      state.lastErrorTime = Date.now()
-
-      throw err
-    }
+  return function asyncBreaker(this: any, ...args: any[]): Promise<T> {
+    return breaker.attempt(() => originalFn.apply(this, args))
   }
 }

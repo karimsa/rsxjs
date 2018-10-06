@@ -5,51 +5,22 @@
 
 import {
   defaults,
-  BreakerState,
-  getBreakerState,
-  BreakerStateObject,
   BreakerOptionsGiven,
+  CircuitBreaker,
 } from './types'
 import {
   SyncFunction,
+  AsyncFunction,
 } from '../types'
-
-import createDebug from 'debug'
-const debug = createDebug('rsxjs')
 
 export function fromSync<T = any>(
   originalFn: SyncFunction<T>,
   _options?: BreakerOptionsGiven
-): SyncFunction<T> {
+): AsyncFunction<T> {
   const options = defaults(_options)
-  const state: BreakerStateObject = {
-    numErrors: 0,
-    lastError: undefined,
-    lastErrorTime: 0,
-  }
+  const breaker = new CircuitBreaker<T>(options)
 
-  return function syncBreaker(...args: any[]): T {
-    const breakerState = getBreakerState(state, options)
-    debug('breaker state => %s', breakerState)
-
-    if (breakerState === BreakerState.CLOSED) {
-      throw state.lastError
-    }
-
-    try {
-      const retValue = originalFn(...args)
-
-      state.numErrors = 0
-      state.lastError = undefined
-      state.lastErrorTime = 0
-
-      return retValue
-    } catch (err) {
-      ++state.numErrors
-      state.lastError = err
-      state.lastErrorTime = Date.now()
-
-      throw err
-    }
+  return function syncBreaker(this: any, ...args: any[]): Promise<T> {
+    return breaker.attempt(() => originalFn.apply(this, args))
   }
 }
