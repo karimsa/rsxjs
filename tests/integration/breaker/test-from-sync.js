@@ -5,11 +5,10 @@
 
 import test from 'ava'
 import lolex from 'lolex'
-import { format, inspect } from 'util'
 
 import { Breaker } from '../../../'
 
-test('Breaker.fromSync()', async t => {
+test('Breaker.fromSync()', t => {
   const MAX_ERRORS = 1 // trip after one error
   const TIMEOUT = 500 // wait for 500 seconds in between states
 
@@ -34,32 +33,40 @@ test('Breaker.fromSync()', async t => {
     toFake: ['Date'],
   })
 
-  t.is(await breakerFn(), Math.PI, 'On first call, should not throw error')
-  t.is(nCalls, 1, 'One call should be done')
+  // to start, should not throw error
+  t.is(breakerFn(), Math.PI)
+  t.is(nCalls, 1)
 
+  // throw real error now
   shouldThrowError = true
-  t.is((await t.throws(breakerFn())).message, 'Failure!', 'Error should be thrown correctly')
-  t.is(nCalls, 2, 'A second call should have been made')
+  t.is(t.throws(breakerFn).message, 'Failure!')
+  t.is(nCalls, 2)
 
+  // should still throw error now that breaker is tripped
   shouldThrowError = false
-  t.is((await t.throws(breakerFn())).message, 'Failure!', 'Should still throw error after breaker is tripped')
-  t.is(nCalls, 2, 'A third call should not be made in a tripped state')
+  t.is(t.throws(breakerFn).message, 'Failure!')
+  // still only called twice, breaker has been tripped
+  t.is(nCalls, 2)
 
+  // should call function again after timeout (half-open)
   clock.tick(TIMEOUT + 1)
   shouldThrowError = true
-  t.is((await t.throws(breakerFn())).message, 'Failure!', 'Should proxy forward error from underlying resource in half-open state')
-  t.is(nCalls, 3, 'A third call should be made in half-open state')
+  t.is(t.throws(breakerFn).message, 'Failure!')
+  t.is(nCalls, 3, 'should have run a third time')
 
+  // breaker should be tripped again
   shouldThrowError = false
-  t.is((await t.throws(breakerFn())).message, 'Failure!', 'Should re-forward error in closed state')
-  t.is(nCalls, 3, 'Breaker should have tripped again')
+  t.is(t.throws(breakerFn).message, 'Failure!')
+  t.is(nCalls, 3)
 
+  // breaker should be half-open again
   clock.tick(TIMEOUT)
-  t.is(await breakerFn(), Math.PI, 'Breaker should be half-open again and should proxy result')
-  t.is(nCalls, 4, 'Underlying resource should be re-used in half-open state')
+  t.is(breakerFn(), Math.PI)
+  t.is(nCalls, 4)
 
-  t.is(await breakerFn(), Math.PI, 'Breaker should once again be open after successful half-open')
-  t.is(nCalls, 5, 'Resource should be re-used after half-open state')
+  // breaker should be open again
+  t.is(breakerFn(), Math.PI)
+  t.is(nCalls, 5)
 
   // cleanup
   clock.uninstall()
