@@ -11,6 +11,7 @@ import {
 import {
   SyncFunction,
 } from '../types'
+import { MemoryStore } from '../store'
 
 export function fromSync<T = any>(
   originalFn: SyncFunction<T>,
@@ -21,6 +22,11 @@ export function fromSync<T = any>(
     numErrors: 0,
     lastError: 'Unknown error',
     lastErrorTime: 0,
+  }
+
+  // sync breakers cannot be distributed
+  if (!(options.store instanceof MemoryStore)) {
+    throw new Error(`Synchronous breakers cannot be distributed. Use an async breaker.`)
   }
 
   return function syncBreaker(this: any, ...args: any[]): T {
