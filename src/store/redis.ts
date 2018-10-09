@@ -5,8 +5,11 @@
  */
 
 import { Redis, RedisOptions } from 'ioredis'
+import createDebugger from 'debug'
 
 import { Store, SetOptions } from './store'
+
+const debug = createDebugger('rsxjs')
 
 export class RedisStore implements Store {
   private readonly redis: Redis
@@ -61,10 +64,15 @@ export class RedisStore implements Store {
   }
 
   async hset<T>(namespace: string, key: string, value: T): Promise<void> {
-    await this.redis.hset(namespace, key, value)
+    await this.redis.hset(namespace, key, JSON.stringify(value))
   }
 
-  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T> {
-    return JSON.parse(await this.redis.hget(namespace, key)) || defaultValue
+  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
+    try {
+      return JSON.parse(await this.redis.hget(namespace, key)) || defaultValue
+    } catch (err) {
+      debug(`failed to hget ${namespace} ${key} => ${err}`)
+      return defaultValue
+    }
   }
 }
