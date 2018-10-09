@@ -10,7 +10,7 @@ import { Semaphore } from '../../../'
 
 test('fromAsync()', async t => {
   const SIZE = 2
-  const DELAY = 500
+  const DELAY = 1000
 
   const frames = {}
   const work = Semaphore.fromAsync(function worker(data) {
