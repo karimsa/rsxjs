@@ -42,10 +42,12 @@ export class Mutex extends Lock {
       expires: this.timeout || 10 * 1000,
     })
     if (lockId === await this.store.get(this.name)) {
-      return () =>
-        this.store.del(this.name)
-          .catch(() => undefined)
-          .finally(() => this.unref())
+      return () => {
+        return this.store.del(this.name).then(val => {
+            this.unref()
+            return val
+          }, () => this.unref())
+      }
     }
 
     if (this.failFast) {
