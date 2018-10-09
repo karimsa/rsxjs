@@ -40,7 +40,31 @@ export class RedisStore implements Store {
     await this.redis.set(key, JSON.stringify(value))
   }
 
+  async incr(key: string): Promise<void> {
+    await this.redis.incr(key)
+  }
+
+  async decr(key: string): Promise<void> {
+    await this.redis.decr(key)
+  }
+
+  async hincr(namespace: string, key: string): Promise<void> {
+    await this.redis.hincrby(namespace, key, 1)
+  }
+
+  async hdecr(namespace: string, key: string): Promise<void> {
+    await this.redis.hincrby(namespace, key, -1)
+  }
+
   del(key: string): Promise<void> {
     return this.redis.del(key)
+  }
+
+  async hset<T>(namespace: string, key: string, value: T): Promise<void> {
+    await this.redis.hset(namespace, key, value)
+  }
+
+  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T> {
+    return JSON.parse(await this.redis.hget(namespace, key)) || defaultValue
   }
 }

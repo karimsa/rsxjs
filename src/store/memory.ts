@@ -17,7 +17,15 @@ export class MemoryStore implements Store {
     this.map = map = map || new Map()
   }
 
-  async get<T>(key: string): Promise<T> {
+  async incr(key: string): Promise<void> {
+    this.map.set(key, (this.map.get(key)|0) + 1)
+  }
+
+  async decr(key: string): Promise<void> {
+    this.map.set(key, (this.map.get(key)|0) - 1)
+  }
+
+  async get<T>(key: string): Promise<T | void> {
     return this.map.get(key)
   }
 
@@ -37,5 +45,31 @@ export class MemoryStore implements Store {
 
   async del(key: string): Promise<void> {
     this.map.delete(key)
+  }
+
+  async hget<T>(namespace: string, key: string): Promise<T | void>;
+  async hget<T>(namespace: string, key: string, defaultValue: T): Promise<T>;
+
+  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
+    const map: Map<string, any> | void = this.map.get(namespace)
+    if (!map) {
+      return defaultValue
+    }
+
+    return map.get(key) || defaultValue
+  }
+
+  async hset<T>(namespace: string, key: string, value: T): Promise<void> {
+    const map: Map<string, any> = this.map.get(namespace) || new Map<string, any>()
+    this.map.set(namespace, map)
+    map.set(key, value)
+  }
+
+  async hincr(namespace: string, key: string): Promise<void> {
+    return this.hset(namespace, key, 1 + (await this.hget(namespace, key, 0)))
+  }
+
+  async hdecr(namespace: string, key: string): Promise<void> {
+    return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
   }
 }

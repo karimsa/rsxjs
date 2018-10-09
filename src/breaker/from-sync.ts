@@ -5,17 +5,13 @@
 
 import {
   defaults,
-  BreakerState,
-  getBreakerState,
-  BreakerStateObject,
   BreakerOptionsGiven,
+  BreakerStateObject,
 } from './types'
 import {
   SyncFunction,
 } from '../types'
-
-import createDebug from 'debug'
-const debug = createDebug('rsxjs')
+import { MemoryStore } from '../store'
 
 export function fromSync<T = any>(
   originalFn: SyncFunction<T>,
@@ -24,32 +20,33 @@ export function fromSync<T = any>(
   const options = defaults(_options)
   const state: BreakerStateObject = {
     numErrors: 0,
-    lastError: undefined,
+    lastError: 'Unknown error',
     lastErrorTime: 0,
   }
 
-  return function syncBreaker(...args: any[]): T {
-    const breakerState = getBreakerState(state, options)
-    debug('breaker state => %s', breakerState)
+  // sync breakers cannot be distributed
+  if (!(options.store instanceof MemoryStore)) {
+    throw new Error(`Synchronous breakers cannot be distributed. Use an async breaker.`)
+  }
 
-    if (breakerState === BreakerState.CLOSED) {
-      throw state.lastError
+  return function syncBreaker(this: any, ...args: any[]): T {
+    if (
+      state.numErrors >= options.maxErrors &&
+      Date.now() - state.lastErrorTime < options.timeout
+    ) {
+      throw new Error(state.lastError)
     }
 
     try {
-      const retValue = originalFn(...args)
-
+      const result = originalFn.apply(this, args)
       state.numErrors = 0
-      state.lastError = undefined
       state.lastErrorTime = 0
-
-      return retValue
+      return result
     } catch (err) {
       ++state.numErrors
-      state.lastError = err
+      state.lastError = String(err.message || err).split('\n')[0]
       state.lastErrorTime = Date.now()
-
-      throw err
+      throw new Error(state.lastError)
     }
   }
 }
