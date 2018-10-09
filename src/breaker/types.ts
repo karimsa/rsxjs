@@ -102,8 +102,11 @@ export class CircuitBreaker<T> {
   async attempt(fn: () => T | Promise<T>): Promise<T> {
     const numErrors = await this.state.get('numErrors')
     const lastErrorTime = await this.state.get('lastErrorTime')
-    debug(`breaker(${this.namespace}) =>`, { numErrors, lastErrorTime })
-    debug(`blah =>`, await this.state.dump())
+
+    if (debug.enabled) {
+      debug(`breaker(${this.namespace}) =>`, { numErrors, lastErrorTime })
+      debug(`blah =>`, await this.state.dump())
+    }
 
     switch (getBreakerState({
       numErrors,
