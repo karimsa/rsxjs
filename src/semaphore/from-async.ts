@@ -9,7 +9,7 @@ import { AsyncFunction } from '../types'
 
 export function fromAsync<T>(fn: AsyncFunction<T>, _options: SemaphoreOptionsGiven): AsyncFunction<T> {
   const options = defaults(_options)
-  const s = new Semaphore(options.size)
+  const s = new Semaphore(options)
 
   return async function mutexWrappedFunction(this: any, ...args: any[]): Promise<T> {
     const unlock = await s.lock(options.failFast)

@@ -3,41 +3,39 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { v4 as uuid } from 'uuid'
+
+import { State } from '../store'
 import { Mutex } from '../mutex/mutex'
 import * as Errors from '../errors'
-import { Lock, Deferred, defer, ReleaseLock } from '../types'
+import { SemaphoreOptions } from './types'
+import { Lock, defer, ReleaseLock } from '../types'
+
+interface SemaphoreState {
+  tokensOut: number
+}
 
 export class Semaphore extends Lock {
-  private _avail: number
-  private mutex: Mutex = new Mutex()
+  public readonly size: number
+  private readonly mutex: Mutex
+  private readonly state: State<SemaphoreState>
 
-  constructor(
-    private readonly size: number
-  ) {
+  constructor(options: SemaphoreOptions) {
     super()
-    this._avail = size
-  }
+    const namespace = `rsxjs:semaphore(${options.name || uuid()})`
 
-  get available() {
-    return this._avail
-  }
-
-  set available(value) {
-    this._avail = value
-
-    if (value === this.size) {
-      this.unref()
-    } else {
-      this.ref()
-    }
-  }
-
-  /**
-   * Semaphore availability is determine by any tokens
-   * available for use. Simple integer is enough for this.
-   */
-  isLocked(): boolean {
-    return this.available === 0
+    this.size = options.size
+    this.mutex = new Mutex({
+      name: `${namespace}:mux`,
+      store: options.store,
+    })
+    this.state = new State<SemaphoreState>({
+      namespace: namespace,
+      store: options.store,
+      defaults: {
+        tokensOut: 0,
+      },
+    })
   }
 
   /**
@@ -46,36 +44,37 @@ export class Semaphore extends Lock {
    * @returns {Promise<ReleaseLock>} resolves with a function that can be used to release the token
    */
   async lock(failWithoutLock: boolean = false): Promise<ReleaseLock> {
-    const releaseMutex = await this.mutex.lock()
-
-    const unlock: ReleaseLock = async () => {
-      const innerRelease = await this.mutex.lock()
-
-      this.available = Math.min(this.available + 1, this.size)
-
+    const unlock = async () => {
+      // try to pass semaphore to next process in queue
       const req = this.requests.shift()
       if (req) {
-        --this.available
-        req.resolve(req.unlock)
+        req.resolve(unlock)
+        return
       }
 
-      innerRelease()
+      // otherwise atomically release
+      await this.state.decr('tokensOut')
     }
 
-    if (!this.isLocked()) {
-      --this.available
-      releaseMutex()
+    // if available, decr and lock
+    const releaseMux = await this.mutex.lock()
+    if (await this.state.get('tokensOut') < this.size) {
+      await this.state.incr('tokensOut')
+      releaseMux()
       return unlock
     }
+    releaseMux()
 
     if (failWithoutLock) {
       throw new Error(Errors.COULD_NOT_LOCK)
     }
 
-    const deferred: Deferred<ReleaseLock> = defer()
-    this.requests.push(Object.assign({ unlock }, deferred))
-    releaseMutex()
-
-    return deferred.promise
+    // if unavailable, push into queue
+    const d = defer<ReleaseLock>()
+    this.requests.push({
+      ...d,
+      unlock,
+    })
+    return d.promise
   }
 }

@@ -3,9 +3,13 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { Store, MemoryStore } from '../store'
+
 export interface SemaphoreOptions {
   size: number
   failFast: boolean
+  name?: string
+  store: Store
 }
 
 export type SemaphoreOptionsGiven = Partial<SemaphoreOptions>
@@ -13,6 +17,7 @@ export type SemaphoreOptionsGiven = Partial<SemaphoreOptions>
 const DefaultSemaphoreOptions: SemaphoreOptions = {
   size: 0,
   failFast: false,
+  store: new MemoryStore(),
 }
 
 export function defaults(options?: SemaphoreOptionsGiven): SemaphoreOptions {
@@ -25,6 +30,14 @@ export function defaults(options?: SemaphoreOptionsGiven): SemaphoreOptions {
 
     if (options.size !== undefined) {
       config.size = options.size
+    }
+
+    if (options.store) {
+      config.store = options.store
+    }
+
+    if (options.name) {
+      config.name = options.name
     }
   }
 

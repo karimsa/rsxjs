@@ -12,10 +12,20 @@ export class State<T extends { [key: string]: any }> {
   private readonly defaults: T
 
   constructor({ store, namespace, defaults }: {
-    store: Store
-    namespace: string
-    defaults: T
+    store?: Store
+    namespace?: string
+    defaults?: T
   }) {
+    if (!store) {
+      throw new Error(`Store is required to create a state`)
+    }
+    if (!namespace) {
+      throw new Error(`Namespace is required to create a new state`)
+    }
+    if (!defaults) {
+      throw new Error(`Defaults are required to create a new state`)
+    }
+
     this.store = store
     this.namespace = namespace
     this.defaults = defaults
