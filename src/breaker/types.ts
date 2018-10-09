@@ -61,6 +61,10 @@ export function defaults(config?: BreakerOptionsGiven): BreakerOptions {
     updatedConfig.store = config.store
   }
 
+  if (config.name) {
+    updatedConfig.name = config.name
+  }
+
   return updatedConfig
 }
 
