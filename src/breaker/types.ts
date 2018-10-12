@@ -103,24 +103,52 @@ export class CircuitBreaker<T> {
     })
   }
 
-  async attempt(fn: () => T | Promise<T>): Promise<T> {
+  private lastState?: BreakerState
+  private lastStateTime?: number
+
+  async getState(): Promise<BreakerState> {
     const numErrors = await this.state.get('numErrors')
     const lastErrorTime = await this.state.get('lastErrorTime')
 
     if (debug.enabled) {
       debug(`breaker(${this.namespace}) =>`, { numErrors, lastErrorTime })
-      debug(`blah =>`, await this.state.dump())
+      debug(`breaker(${this.namespace}) => state dump`, await this.state.dump())
     }
 
-    switch (getBreakerState({
+    this.lastState = getBreakerState({
       numErrors,
       lastErrorTime,
       options: this.options,
-    })) {
+    })
+    this.lastStateTime = Date.now()
+
+    return this.lastState
+  }
+
+  async getStateUnsafe(): Promise<BreakerState> {
+    if (
+      this.lastState !== undefined &&
+      this.lastStateTime !== undefined &&
+      (Date.now() - this.lastStateTime) < this.options.timeout
+    ) {
+      return this.lastState
+    }
+
+    return this.getState()
+  }
+
+  async shouldAllowRequest(): Promise<boolean> {
+    return BreakerState.CLOSED !== await this.getStateUnsafe()
+  }
+
+  async attempt(fn: () => T | Promise<T>): Promise<T> {
+    switch (await this.getState()) {
       case BreakerState.HALFOPEN:
       case BreakerState.OPEN: {
         try {
+          debug(`breaker(${this.namespace}) => passing through`)
           const result = await fn()
+          debug(`breaker(${this.namespace}) => resetting state: %s`)
           await this.state.reset()
           return result
         } catch (err) {
@@ -136,6 +164,11 @@ export class CircuitBreaker<T> {
       }
     }
   }
+}
+
+export interface BreakerFunction<T> {
+  (...args: any[]): Promise<T>
+  shouldAllowRequest(): Promise<boolean>
 }
 
 export function getBreakerState({ numErrors, lastErrorTime, options }: {
