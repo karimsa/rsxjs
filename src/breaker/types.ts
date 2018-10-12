@@ -156,7 +156,7 @@ export class CircuitBreaker<T> {
       return this.lastState
     }
 
-    return this.getState()
+    return this.getFreshState()
   }
 
   async shouldAllowRequest(): Promise<boolean> {
