@@ -86,6 +86,12 @@ export const enum BreakerState {
   HALFOPEN,
 }
 
+interface StateCache {
+  numErrors: number
+  lastErrorTime: number
+  state: BreakerState
+}
+
 export class CircuitBreaker<T> {
   private readonly namespace: string
   private readonly state: State<BreakerStateObject>
@@ -103,10 +109,18 @@ export class CircuitBreaker<T> {
     })
   }
 
-  private lastState?: BreakerState
+  private lastState?: StateCache
   private lastStateTime?: number
 
-  async getState(): Promise<BreakerState> {
+  lastStateIsFresh(): boolean {
+    return (
+      this.lastState !== undefined &&
+      this.lastStateTime !== undefined &&
+      (Date.now() - this.lastStateTime) < this.options.timeout
+    )
+  }
+
+  async getFreshState(): Promise<StateCache> {
     const numErrors = await this.state.get('numErrors')
     const lastErrorTime = await this.state.get('lastErrorTime')
 
@@ -115,22 +129,30 @@ export class CircuitBreaker<T> {
       debug(`breaker(${this.namespace}) => state dump`, await this.state.dump())
     }
 
-    this.lastState = getBreakerState({
+    const state = getBreakerState({
       numErrors,
       lastErrorTime,
       options: this.options,
     })
-    this.lastStateTime = Date.now()
 
-    return this.lastState
+    const stateObject = {
+      numErrors,
+      lastErrorTime,
+      state,
+    }
+
+    // only cache when we close since during a closed state, all requests
+    // can be avoided during the timeout because the state will not change
+    if (state === BreakerState.CLOSED) {
+      this.lastStateTime = Date.now()
+      this.lastState = stateObject
+    }
+
+    return stateObject
   }
 
-  async getStateUnsafe(): Promise<BreakerState> {
-    if (
-      this.lastState !== undefined &&
-      this.lastStateTime !== undefined &&
-      (Date.now() - this.lastStateTime) < this.options.timeout
-    ) {
+  async getState(): Promise<StateCache> {
+    if (this.lastStateIsFresh() && this.lastState) {
       return this.lastState
     }
 
@@ -138,18 +160,26 @@ export class CircuitBreaker<T> {
   }
 
   async shouldAllowRequest(): Promise<boolean> {
-    return BreakerState.CLOSED !== await this.getStateUnsafe()
+    return BreakerState.CLOSED !== (await this.getState()).state
   }
 
   async attempt(fn: () => T | Promise<T>): Promise<T> {
-    switch (await this.getState()) {
+    const { numErrors, state } = await this.getState()
+
+    switch (state) {
       case BreakerState.HALFOPEN:
       case BreakerState.OPEN: {
         try {
           debug(`breaker(${this.namespace}) => passing through`)
           const result = await fn()
           debug(`breaker(${this.namespace}) => resetting state: %s`)
-          await this.state.reset()
+
+          // if we received a default value, no need to send a reset
+          // instruction
+          if (numErrors > 0) {
+            await this.state.reset()
+          }
+
           return result
         } catch (err) {
           await this.state.incr('numErrors')
