@@ -96,4 +96,32 @@ export interface Store {
    * @returns {Promise<void>} resolves after delete
    */
   del(key: string): Promise<void>
+
+  /**
+   * Pushes an element to the right of a list.
+   * @param listName the name of the list to push into
+   * @param elm the element to add
+   * @returns {Promise<void} resolves after push
+   */
+  rpush(listName: string, elm: any): Promise<void>
+
+  /**
+   * Pushes an element to the left of a list.
+   * @param listName the name of the list to push into
+   * @param elm the element to add
+   * @returns {Promise<void} resolves after push
+   */
+  lpush(listName: string, elm: any): Promise<void>
+
+  /**
+   * Removes a single element from the right of the list.
+   * @param listName the name of the list to remove from
+   */
+  rpop<T>(listName: string): Promise<T | void>
+
+  /**
+   * Removes a single element from the keft of the list.
+   * @param listName the name of the list to remove from
+   */
+  lpop<T>(listName: string): Promise<T | void>
 }

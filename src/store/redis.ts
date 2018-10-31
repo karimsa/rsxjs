@@ -75,4 +75,20 @@ export class RedisStore implements Store {
       return defaultValue
     }
   }
+
+  rpush(listName: string, value: any): Promise<void> {
+    return this.redis.rpush(listName, JSON.parse(value))
+  }
+
+  lpush(listName: string, value: any): Promise<void> {
+    return this.redis.lpush(listName, JSON.parse(value))
+  }
+
+  async rpop<T>(listName: string): Promise<T | void> {
+    return JSON.parse(await this.redis.rpop(listName))
+  }
+
+  async lpop<T>(listName: string): Promise<T | void> {
+    return JSON.parse(await this.redis.lpop(listName))
+  }
 }
