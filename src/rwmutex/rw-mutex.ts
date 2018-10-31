@@ -81,8 +81,7 @@ export class RWMutex {
     }
   }
 
-  private async tryWLock(): Promise<ReleaseLock> {
-    const writerId = uuid()
+  private async tryWLock(writerId: string, attempts: number): Promise<ReleaseLock> {
     const unlock = await this.mux.lock()
     try {
       if (
@@ -92,7 +91,10 @@ export class RWMutex {
         // or if at least one reader has a lock
         (await this.state.get('readerCount')) > 0
       ) {
-        await this.state.incr('writeAttempts')
+        if (attempts === 0) {
+          await this.state.incr('writeAttempts')
+        }
+
         throw new Error(Errors.COULD_NOT_LOCK)
       }
 
@@ -115,7 +117,7 @@ export class RWMutex {
   }
 
   private async spinAndLock(
-    lockFn: () => Promise<ReleaseLock>,
+    lockFn: (attempts: number) => Promise<ReleaseLock>,
     { timeout, failFast }: LockOptions = {}
   ): Promise<ReleaseLock> {
     if (!timeout) {
@@ -123,13 +125,14 @@ export class RWMutex {
     }
 
     if (failFast) {
-      return lockFn()
+      return lockFn(0)
     }
 
     const start = Date.now()
+    let attempts = 0
     while (Date.now() - start < timeout) {
       try {
-        const unlock = await lockFn()
+        const unlock = await lockFn(attempts++)
         return unlock
       } catch (err) {
         if (String(err).indexOf(Errors.COULD_NOT_LOCK) === -1) {
@@ -154,6 +157,7 @@ export class RWMutex {
    * Obtains a lock for writing.
    */
   async WLock(options?: LockOptions) {
-    return this.spinAndLock(() => this.tryWLock(), options)
+    const writerId = uuid()
+    return this.spinAndLock(attempts => this.tryWLock(writerId, attempts), options)
   }
 }
