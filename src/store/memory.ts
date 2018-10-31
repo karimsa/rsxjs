@@ -10,6 +10,17 @@ import { Store, SetOptions } from './store'
 // maps like redis
 let map: Map<string, any>
 
+interface LinkedNode<T> {
+  value: T
+  next?: LinkedNode<T>
+  prev?: LinkedNode<T>
+}
+
+interface LinkedList<T> {
+  head?: LinkedNode<T>
+  tail?: LinkedNode<T>
+}
+
 export class MemoryStore implements Store {
   private readonly map: Map<string, any>
 
@@ -71,5 +82,65 @@ export class MemoryStore implements Store {
 
   async hdecr(namespace: string, key: string): Promise<void> {
     return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
+  }
+
+  async rpush<T>(listName: string, value: T): Promise<void> {
+    const node: LinkedNode<T> = {
+      value,
+    }
+    const list: LinkedList<T> = this.map.get(listName)
+
+    if (!list || !list.tail) {
+      this.map.set(listName, {
+        head: node,
+        tail: node,
+      })
+      return
+    }
+
+    list.tail.next = node
+    node.prev = list.tail
+    list.tail = node
+  }
+
+  async lpush<T>(listName: string, value: T): Promise<void> {
+    const node: LinkedNode<T> = {
+      value,
+    }
+    const list: LinkedList<T> = this.map.get(listName)
+
+    if (!list || !list.head) {
+      this.map.set(listName, {
+        head: node,
+        tail: node,
+      })
+      return
+    }
+
+    node.next = list.head
+    list.head.prev = node
+    list.head = node
+  }
+
+  async rpop<T>(listName: string): Promise<T | void> {
+    const list: LinkedList<T> = this.map.get(listName)
+    if (!list || !list.tail) {
+      return
+    }
+
+    const node = list.tail
+    list.tail = node.prev
+    return node.value
+  }
+
+  async lpop<T>(listName: string): Promise<T | void> {
+    const list: LinkedList<T> = this.map.get(listName)
+    if (!list || !list.head) {
+      return
+    }
+
+    const node = list.head
+    list.head = node.next
+    return node.value
   }
 }
