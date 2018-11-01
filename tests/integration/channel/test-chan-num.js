@@ -1,5 +1,5 @@
 /**
- * @file tests/channel/test-chan-num.js
+ * @file tests/integration/channel/test-chan-num.js
  * @description Testing behavior of a simple number channel in buffered & unbuffered modes.
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
@@ -43,6 +43,7 @@ test('chan: buffered then unbuffered', async t => {
   t.deepEqual(await c.put(r2, 10), { ok: false })
 
   t.deepEqual(await c.take(), { ok: true, value: r1 })
-  t.deepEqual(await c.take(), { ok: true, value: r2 })
+
+  // since put for r2 has failed, takes should return nothing
   t.deepEqual(await c.take(10), { ok: false })
 })
