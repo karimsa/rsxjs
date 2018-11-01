@@ -13,9 +13,15 @@ import { after as timeoutAfter } from '../timeout/after'
 import { Deferred, defer } from '../types'
 
 interface IChannel<T> {
+  // default R/W methods
   select(): TakeResult<T>
   take(timeout?: number): Promise<T>
   put(value: T, timeout?: number): Promise<void>
+
+  // support opposite direction
+  rselect(): TakeResult<T>
+  rtake(timeout?: number): Promise<T>
+  lput(value: T, timeout?: number): Promise<void>
 }
 
 interface ChannelConfig {
@@ -43,9 +49,9 @@ class BufferedChannel<T> implements IChannel<T> {
     private readonly config: ChannelConfig
   ) {}
 
-  async put(v: T): Promise<void> {
+  private async _put(v: T, dir: 'left' | 'right'): Promise<void> {
     // try to pass it to the next taker first
-    const nextTaker = this.takers.pop()
+    const nextTaker = dir === 'left' ? this.takers.pop() : this.takers.shift()
     if (nextTaker) {
       nextTaker.resolve(v)
       return
@@ -63,12 +69,24 @@ class BufferedChannel<T> implements IChannel<T> {
       return signal.promise
     }
 
-    this.buffer.push(v)
+    if (dir === 'right') {
+      this.buffer.push(v)
+    } else {
+      this.buffer.unshift(v)
+    }
   }
 
-  async take(): Promise<T> {
+  put(v: T): Promise<void> {
+    return this._put(v, 'right')
+  }
+
+  lput(v: T): Promise<void> {
+    return this._put(v, 'left')
+  }
+
+  async _take(dir: 'left' | 'right'): Promise<T> {
     if (this.buffer.length === 0) {
-      const nextPutter = this.putters.shift()
+      const nextPutter = dir === 'left' ? this.putters.shift() : this.putters.pop()
       if (nextPutter) {
         nextPutter.signal.resolve()
         return nextPutter.value
@@ -79,19 +97,30 @@ class BufferedChannel<T> implements IChannel<T> {
       return p.promise
     }
 
-    return this.buffer.shift() as T
+    if (dir === 'left') {
+      return this.buffer.shift() as T
+    }
+    return this.buffer.pop() as T
   }
 
-  select(): TakeResult<T> {
+  take() {
+    return this._take('left')
+  }
+
+  rtake() {
+    return this._take('right')
+  }
+
+  _select(dir: 'left' | 'right'): TakeResult<T> {
     if (this.buffer.length > 0) {
       return {
-        value: this.buffer.shift(),
+        value: dir === 'left' ? this.buffer.shift() : this.buffer.pop(),
         ok: true,
       }
     }
 
     // try to steal from a putter
-    const nextPutter = this.putters.shift()
+    const nextPutter = dir === 'left' ? this.putters.shift() : this.putters.pop()
     if (nextPutter) {
       nextPutter.signal.resolve()
       return {
@@ -103,6 +132,14 @@ class BufferedChannel<T> implements IChannel<T> {
     return {
       ok: false,
     }
+  }
+
+  select() {
+    return this._select('left')
+  }
+
+  rselect() {
+    return this._select('right')
   }
 }
 
@@ -149,25 +186,38 @@ export class Channel<T> {
     delete Channel.chanMap[this.selectSymbol as any]
   }
   
-  async put(value: T, timeout?: number): Promise<PutResult> {
+  private async _put(dir: 'left' | 'right', value: T, timeout?: number): Promise<PutResult> {
     if (!this.isOpen) {
       throw new Error(Errors.CLOSED_CHAN)
     }
 
     if (!isDefined(timeout)) {
-      await this.chan.put(value)
+      if (dir === 'right') {
+        await this.chan.put(value)
+      } else {
+        await this.chan.lput(value)
+      }
+
       return { ok: true }
     }
 
     const [i] = await any([
-      this.chan.put(value),
+      dir === 'right' ? this.chan.put(value) : this.chan.lput(value),
       timeoutAfter(timeout).take(),
     ])
     return { ok: i === 0 }
   }
 
-  async take(timeout?: number): Promise<TakeResult<T>> {
-    const { value, ok } = this.chan.select()
+  put(value: T, timeout?: number) {
+    return this._put('right', value, timeout)
+  }
+
+  lput(value: T, timeout?: number) {
+    return this._put('left', value, timeout)
+  }
+
+  private async _take(dir: 'left' | 'right', timeout?: number): Promise<TakeResult<T>> {
+    const { value, ok } = (dir === 'left' ? this.chan.select() : this.chan.rselect())
     if (ok) {
       return { value, ok }
     }
@@ -177,7 +227,7 @@ export class Channel<T> {
     }
 
     if (!isDefined(timeout)) {
-      const value = await this.chan.take()
+      const value = await (dir === 'left' ? this.chan.take() : this.chan.rtake())
       return { value, ok: true }
     }
 
@@ -187,8 +237,20 @@ export class Channel<T> {
     })
   }
 
+  take(timeout?: number) {
+    return this._take('left', timeout)
+  }
+
+  rtake(timeout?: number) {
+    return this._take('right', timeout)
+  }
+
   select() {
     return this.chan.select()
+  }
+
+  rselect() {
+    return this.chan.rselect()
   }
 
   async* [Symbol.asyncIterator](): AsyncIterableIterator<T> {
