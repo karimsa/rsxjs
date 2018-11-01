@@ -91,4 +91,12 @@ export class RedisStore implements Store {
   async lpop<T>(listName: string): Promise<T | void> {
     return JSON.parse(await this.redis.lpop(listName))
   }
+
+  async brpop<T>(listName: string, timeout: number): Promise<T | void> {
+    return JSON.parse(await this.redis.brpop(listName, String(timeout)))
+  }
+
+  async blpop<T>(listName: string, timeout: number): Promise<T | void> {
+    return JSON.parse(await this.redis.blpop(listName, String(timeout)))
+  }
 }

@@ -4,29 +4,15 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import { makeChan, chan } from '../channel'
 import { Store, SetOptions } from './store'
 
 // use a universal map to stay consistent with distributed
 // maps like redis
 let map: Map<string, any>
 
-interface LinkedNode<T> {
-  value: T
-  next?: LinkedNode<T>
-  prev?: LinkedNode<T>
-}
-
-interface LinkedList<T> {
-  head?: LinkedNode<T>
-  tail?: LinkedNode<T>
-}
-
 export class MemoryStore implements Store {
-  private readonly map: Map<string, any>
-
-  constructor() {
-    this.map = map = map || new Map()
-  }
+  private readonly map: Map<string, any> = map = map || new Map()
 
   async incr(key: string): Promise<number> {
     this.map.set(key, (this.map.get(key)|0) + 1)
@@ -91,62 +77,52 @@ export class MemoryStore implements Store {
   }
 
   async rpush<T>(listName: string, value: T): Promise<void> {
-    const node: LinkedNode<T> = {
-      value,
-    }
-    const list: LinkedList<T> = this.map.get(listName)
-
-    if (!list || !list.tail) {
-      this.map.set(listName, {
-        head: node,
-        tail: node,
-      })
-      return
+    if (!this.map.has(listName)) {
+      this.map.set(listName, makeChan({
+        bufferSize: 1e9,
+      }))
     }
 
-    list.tail.next = node
-    node.prev = list.tail
-    list.tail = node
+    const q: chan<any> = this.map.get(listName)
+    await q.put(value)
   }
 
   async lpush<T>(listName: string, value: T): Promise<void> {
-    const node: LinkedNode<T> = {
-      value,
-    }
-    const list: LinkedList<T> = this.map.get(listName)
-
-    if (!list || !list.head) {
-      this.map.set(listName, {
-        head: node,
-        tail: node,
-      })
-      return
+    if (!this.map.has(listName)) {
+      this.map.set(listName, makeChan({
+        bufferSize: 1e9,
+      }))
     }
 
-    node.next = list.head
-    list.head.prev = node
-    list.head = node
+    const q: chan<any> = this.map.get(listName)
+    await q.lput(value)
   }
 
   async rpop<T>(listName: string): Promise<T | void> {
-    const list: LinkedList<T> = this.map.get(listName)
-    if (!list || !list.tail) {
-      return
+    const q: chan<any> = this.map.get(listName)
+    if (q) {
+      return q.rselect().value
     }
-
-    const node = list.tail
-    list.tail = node.prev
-    return node.value
   }
 
   async lpop<T>(listName: string): Promise<T | void> {
-    const list: LinkedList<T> = this.map.get(listName)
-    if (!list || !list.head) {
-      return
+    const q: chan<any> = this.map.get(listName)
+    if (q) {
+      return q.select().value
     }
+  }
 
-    const node = list.head
-    list.head = node.next
-    return node.value
+  async brpop<T>(listName: string, timeout: number): Promise<T | void> {
+    const q: chan<any> = this.map.get(listName)
+    if (q) {
+      return (await q.rtake(timeout)).value
+    }
+  }
+
+  async blpop<T>(listName: string, timeout: number): Promise<T | void> {
+    const q: chan<any> = this.map.get(listName)
+    if (q) {
+      return (await q.take(timeout)).value
+    }
   }
 }

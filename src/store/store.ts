@@ -120,8 +120,24 @@ export interface Store {
   rpop<T>(listName: string): Promise<T | void>
 
   /**
-   * Removes a single element from the keft of the list.
+   * Removes a single element from the left of the list.
    * @param listName the name of the list to remove from
    */
   lpop<T>(listName: string): Promise<T | void>
+
+  /**
+   * Removes a single element from the right of the list, will
+   * wait till there is an item - or until timeout is exceeded.
+   * @param listName the name of the list to remove from
+   * @param timeout the max time to wait for an item to be available
+   */
+  brpop<T>(listName: string, timeout: number): Promise<T | void>
+
+  /**
+   * Removes a single element from the left of the list, will
+   * wait till there is an item - or until timeout is exceeded.
+   * @param listName the name of the list to remove from
+   * @param timeout the max time to wait for an item to be available
+   */
+  blpop<T>(listName: string, timeout: number): Promise<T | void>
 }

@@ -4,23 +4,30 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
+import createDebug from 'debug'
 import { typeCheck } from '@foko/type-check'
 
-import { select } from './select'
-import * as Errors from '../errors'
-import { isDefined, delay, any } from '../utils'
-import { after as timeoutAfter } from '../timeout/after'
+const debug = createDebug('rsxjs:channel')
+
 import { Deferred, defer } from '../types'
+import { isDefined, any, delay } from '../utils'
 
 interface IChannel<T> {
+  close(): void
+
+  // default R/W methods
   select(): TakeResult<T>
-  take(timeout?: number): Promise<T>
-  put(value: T, timeout?: number): Promise<void>
+  take(timeout?: number): Promise<TakeResult<T>>
+  put(value: T, timeout?: number): Promise<PutResult>
+
+  // support opposite direction
+  rselect(): TakeResult<T>
+  rtake(timeout?: number): Promise<TakeResult<T>>
+  lput(value: T, timeout?: number): Promise<PutResult>
 }
 
 interface ChannelConfig {
   bufferSize: number
-  pollInterval: number
 }
 
 interface PutResult {
@@ -32,101 +39,19 @@ interface TakeResult<T> {
   ok: boolean
 }
 
-class BlockingChannel<T> implements IChannel<T> {
-  private buffer: {
-    value: T
-    p: Deferred<void>
-  }[] = []
-
-  constructor(
-    private readonly config: ChannelConfig
-  ) {}
-
-  async put(value: T): Promise<void> {
-    const p = defer<void>()
-    this.buffer.push({
-      value,
-      p,
-    })
-    return p.promise
-  }
-
-  async take(): Promise<T> {
-    const { value, ok } = this.select()
-    if (ok) {
-      return value as T
-    }
-
-    await delay(this.config.pollInterval)
-    return this.take()
-  }
-
-  select() {
-    const b = this.buffer.shift()
-    if (b) {
-      b.p.resolve()
-      return {
-        ok: true,
-        value: b.value,
-      }
-    }
-
-    return {
-      ok: false,
-    }
-  }
-}
-
-class BufferedChannel<T> implements IChannel<T> {
-  private readonly buffer: T[] = []
-
-  constructor(
-    private readonly config: ChannelConfig
-  ) {}
-  
-  async put(v: T): Promise<void> {
-    if (this.buffer.length === this.config.bufferSize) {
-      await delay(this.config.pollInterval)
-      return this.put(v)
-    }
-
-    this.buffer.push(v)
-  }
-  
-  async take(): Promise<T> {
-    if (this.buffer.length === 0) {
-      return new Promise<T>((resolve, reject) => {
-        setTimeout(() => {
-          this.take().then(resolve, reject)
-        }, this.config.pollInterval)
-      })
-    }
-    
-    return this.buffer.shift() as T
-  }
-
-  select() {
-    if (this.buffer.length > 0) {
-      return {
-        value: this.buffer.shift(),
-        ok: true,
-      }
-    }
-
-    return {
-      ok: false,
-    }
-  }
-}
-
-export class Channel<T> {
-  private readonly chan: IChannel<T> & symbol
+export class Channel<T> implements IChannel<T> {
   private isOpen: boolean = true
+  private readonly buffer: T[] = []
+  private putters: {
+    signal: Deferred<void>
+    value: T
+  }[] = []
+  private takers: Deferred<T>[] = []
 
   // this makes the select() magic work
   private selectSymbol = Symbol()
   private static chanMap: { [key in any]: Channel<any> } = {}
-  
+
   ;[Symbol.toPrimitive]() { return this.selectSymbol }
 
   static getChannel<T>(sym: symbol): chan<T> {
@@ -139,32 +64,14 @@ export class Channel<T> {
   }
 
   constructor(
-    c: Partial<ChannelConfig> = {}
+    private readonly config: Partial<ChannelConfig> = {
+      bufferSize: 0,
+    }
   ) {
     Channel.chanMap[this.selectSymbol as any] = this
 
-    const config: ChannelConfig = {
-      bufferSize: 0,
-      pollInterval: 10,
-    }
-    
-    typeCheck('object', c)
-    typeCheck('number?', c.bufferSize)
-    typeCheck('number?', c.pollInterval)
-      
-    if (isDefined(c.bufferSize)) {
-      config.bufferSize = c.bufferSize as any
-    }
-      
-    if (isDefined(c.pollInterval)) {
-      config.pollInterval = c.pollInterval as any
-    }
-
-    if (config.bufferSize > 0) {
-      this.chan = new BufferedChannel(config) as any
-    } else {
-      this.chan = new BlockingChannel(config) as any
-    }
+    typeCheck('object', config)
+    typeCheck('number?', config.bufferSize)
   }
 
   close(): void {
@@ -172,46 +79,184 @@ export class Channel<T> {
     delete Channel.chanMap[this.selectSymbol as any]
   }
   
-  async put(value: T, timeout?: number): Promise<PutResult> {
+  private async _put(dir: 'left' | 'right', value: T, timeout?: number): Promise<PutResult> {
     if (!this.isOpen) {
-      throw new Error(Errors.CLOSED_CHAN)
+      debug(`refusing to put on a closed channel`)
+      return { ok: false }
     }
 
-    if (!isDefined(timeout)) {
-      await this.chan.put(value)
+    // try to pass it to the next taker first
+    const nextTaker = dir === 'left' ? this.takers.pop() : this.takers.shift()
+    if (nextTaker) {
+      debug(`found pending taker, forwarding value`)
+      nextTaker.resolve(value)
       return { ok: true }
     }
 
-    const [i] = await any([
-      this.chan.put(value),
-      timeoutAfter(timeout).take(),
-    ])
-    return { ok: i === 0 }
+    // if buffer is full, add a signal listener that
+    // will wait for room before pushing
+    if (this.buffer.length === this.config.bufferSize) {
+      const signal = defer<void>()
+      const putter = {
+        signal,
+        value,
+      }
+      this.putters.push(putter)
+      debug(`added background putter, waiting for signal`)
+
+      if (isDefined(timeout)) {
+        const [i] = await any([
+          signal.promise,
+          delay(timeout),
+        ])
+
+        if (i === 0) {
+          debug(`background signal received for putter, value was read`)
+        } else {
+          debug(`background putter timed out`)
+
+          // unfortunately need to resort to O(n) since the indexes
+          // will shift while waiting
+          this.putters = this.putters.filter(putterInList => {
+            return putterInList !== putter
+          })
+        }
+
+        return {
+          ok: i === 0,
+        }
+      }
+
+      await signal.promise
+      return { ok: true }
+    }
+
+    if (dir === 'right') {
+      debug(`putter wrote value to the right of the buffer`)
+      this.buffer.push(value)
+    } else {
+      debug(`putter wrote value to the left of the buffer`)
+      this.buffer.unshift(value)
+    }
+    return { ok: true }
   }
 
-  async take(timeout?: number): Promise<TakeResult<T>> {
-    const { value, ok } = this.chan.select()
+  put(value: T, timeout?: number) {
+    return this._put('right', value, timeout)
+  }
+
+  lput(value: T, timeout?: number) {
+    return this._put('left', value, timeout)
+  }
+
+  private async _take(dir: 'left' | 'right', timeout?: number): Promise<TakeResult<T>> {
+    const { value, ok } = (dir === 'left' ? this.select() : this.rselect())
     if (ok) {
       return { value, ok }
     }
 
     if (!this.isOpen) {
-      throw new Error(Errors.CLOSED_CHAN)
+      debug(`channel is closed & empty, refusing to take`)
+      return { ok: false }
     }
 
-    if (!isDefined(timeout)) {
-      const value = await this.chan.take()
-      return { value, ok: true }
+    if (this.buffer.length === 0) {
+      const nextPutter = dir === 'left' ? this.putters.shift() : this.putters.pop()
+      if (nextPutter) {
+        nextPutter.signal.resolve()
+        debug(`taker found an empty buffer & a background putter, stealing value`)
+        return {
+          ok: true,
+          value: nextPutter.value,
+        }
+      }
+
+      const p = defer<T>()
+      this.takers.push(p)
+      debug(`adding taker to background list`)
+
+      if (isDefined(timeout)) {
+        const [i, value] = await any([
+          p.promise,
+          delay(timeout),
+        ])
+
+        if (i === 0) {
+          debug(`received value from background taker`)
+          return {
+            ok: true,
+            value,
+          }
+        }
+
+        debug(`failed to received value from background taker, timed out`)
+        this.takers = this.takers.filter(takerFromList => {
+          return takerFromList !== p
+        })
+        return {
+          ok: false,
+        }
+      }
+
+      const value = await p.promise
+      debug(`received value from background taker`)
+      return {
+        ok: true,
+        value,
+      }
     }
 
-    return select({
-      [this.chan]: (value: T) => ({ value, ok: true }),
-      [timeoutAfter(timeout)]: () => ({ ok: false }),
-    })
+    const poppedValue = dir === 'left' ? 
+      this.buffer.shift() as T :
+      this.buffer.pop() as T
+
+    debug(`read value from static buffer`)
+    return {
+      ok: !!poppedValue,
+      value: poppedValue,
+    }
+  }
+
+  take(timeout?: number) {
+    return this._take('left', timeout)
+  }
+
+  rtake(timeout?: number) {
+    return this._take('right', timeout)
+  }
+
+  private _select(dir: 'left' | 'right'): TakeResult<T> {
+    if (this.buffer.length > 0) {
+      debug(`selected value from %s of buffer`, dir)
+      return {
+        value: dir === 'left' ? this.buffer.shift() : this.buffer.pop(),
+        ok: true,
+      }
+    }
+
+    // try to steal from a putter
+    const nextPutter = dir === 'left' ? this.putters.shift() : this.putters.pop()
+    if (nextPutter) {
+      debug(`selected value from background putter`)
+      nextPutter.signal.resolve()
+      return {
+        value: nextPutter.value,
+        ok: true,
+      }
+    }
+
+    debug(`failed to select a value`)
+    return {
+      ok: false,
+    }
   }
 
   select() {
-    return this.chan.select()
+    return this._select('left')
+  }
+
+  rselect() {
+    return this._select('right')
   }
 
   async* [Symbol.asyncIterator](): AsyncIterableIterator<T> {
