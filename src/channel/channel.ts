@@ -31,60 +31,11 @@ interface TakeResult<T> {
   ok: boolean
 }
 
-class BlockingChannel<T> implements IChannel<T> {
-  private readonly buffer: {
-    value: T
-    p: Deferred<void>
-  }[] = []
-  private readonly takers: Deferred<T>[] = []
-
-  async put(value: T): Promise<void> {
-    const nextTaker = this.takers.shift()
-    if (nextTaker) {
-      nextTaker.resolve(value)
-      return
-    }
-
-    const p = defer<void>()
-    this.buffer.push({
-      value,
-      p,
-    })
-    return p.promise
-  }
-
-  async take(): Promise<T> {
-    const { value, ok } = this.select()
-    if (ok) {
-      return value as T
-    }
-
-    const p = defer<T>()
-    this.takers.push(p)
-    return p.promise
-  }
-
-  select() {
-    const b = this.buffer.shift()
-    if (b) {
-      b.p.resolve()
-      return {
-        ok: true,
-        value: b.value,
-      }
-    }
-
-    return {
-      ok: false,
-    }
-  }
-}
-
 class BufferedChannel<T> implements IChannel<T> {
   private readonly buffer: T[] = []
   private readonly putters: {
-    putSignal: Deferred<void>
-    takeSignal: Deferred<T>
+    signal: Deferred<void>
+    value: T
   }[] = []
   private readonly takers: Deferred<T>[] = []
 
@@ -103,16 +54,13 @@ class BufferedChannel<T> implements IChannel<T> {
     // if buffer is full, add a signal listener that
     // will wait for room before pushing
     if (this.buffer.length === this.config.bufferSize) {
-      const putSignal = defer<void>()
-      const takeSignal = defer<T>()
+      const signal = defer<void>()
       this.putters.push({
-        putSignal,
-        takeSignal,
+        signal,
+        value: v,
       })
 
-      await putSignal.promise
-      takeSignal.resolve(v)
-      return
+      return signal.promise
     }
 
     this.buffer.push(v)
@@ -122,8 +70,8 @@ class BufferedChannel<T> implements IChannel<T> {
     if (this.buffer.length === 0) {
       const nextPutter = this.putters.shift()
       if (nextPutter) {
-        nextPutter.putSignal.resolve()
-        return nextPutter.takeSignal.promise
+        nextPutter.signal.resolve()
+        return nextPutter.value
       }
 
       const p = defer<T>()
@@ -134,10 +82,20 @@ class BufferedChannel<T> implements IChannel<T> {
     return this.buffer.shift() as T
   }
 
-  select() {
+  select(): TakeResult<T> {
     if (this.buffer.length > 0) {
       return {
         value: this.buffer.shift(),
+        ok: true,
+      }
+    }
+
+    // try to steal from a putter
+    const nextPutter = this.putters.shift()
+    if (nextPutter) {
+      nextPutter.signal.resolve()
+      return {
+        value: nextPutter.value,
         ok: true,
       }
     }
@@ -183,11 +141,7 @@ export class Channel<T> {
       config.bufferSize = c.bufferSize as any
     }
 
-    if (config.bufferSize > 0) {
-      this.chan = new BufferedChannel(config) as any
-    } else {
-      this.chan = new BlockingChannel() as any
-    }
+    this.chan = new BufferedChannel(config) as any
   }
 
   close(): void {
