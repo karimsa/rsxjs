@@ -13,15 +13,17 @@ import { Deferred, defer } from '../types'
 import { isDefined, any, delay } from '../utils'
 
 interface IChannel<T> {
+  close(): void
+
   // default R/W methods
   select(): TakeResult<T>
-  take(timeout?: number): Promise<T>
-  put(value: T, timeout?: number): Promise<void>
+  take(timeout?: number): Promise<TakeResult<T>>
+  put(value: T, timeout?: number): Promise<PutResult>
 
   // support opposite direction
   rselect(): TakeResult<T>
-  rtake(timeout?: number): Promise<T>
-  lput(value: T, timeout?: number): Promise<void>
+  rtake(timeout?: number): Promise<TakeResult<T>>
+  lput(value: T, timeout?: number): Promise<PutResult>
 }
 
 interface ChannelConfig {
@@ -37,7 +39,7 @@ interface TakeResult<T> {
   ok: boolean
 }
 
-export class Channel<T> {
+export class Channel<T> implements IChannel<T> {
   private isOpen: boolean = true
   private readonly buffer: T[] = []
   private putters: {
@@ -58,7 +60,7 @@ export class Channel<T> {
       throw new Error(`Failed to fetch closed channel`)
     }
 
-    return chan as any as chan<T>
+    return chan as chan<T>
   }
 
   constructor(
@@ -223,7 +225,7 @@ export class Channel<T> {
     return this._take('right', timeout)
   }
 
-  private _select(dir: 'left' | 'right') {
+  private _select(dir: 'left' | 'right'): TakeResult<T> {
     if (this.buffer.length > 0) {
       debug(`selected value from %s of buffer`, dir)
       return {
@@ -306,7 +308,7 @@ export class WriteOnlyChannel<T> {
 
 export type readOnlyChan<T> = ReadOnlyChannel<T> & symbol
 export type writeOnlyChan<T> = WriteOnlyChannel<T> & symbol
-export type chan<T> = IChannel<T> & symbol
+export type chan<T> = Channel<T> & symbol
 
 export function makeChan<T>(opts?: Partial<ChannelConfig>): chan<T> {
   return new Channel(opts) as any
