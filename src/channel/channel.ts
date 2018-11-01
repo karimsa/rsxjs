@@ -8,7 +8,7 @@ import { typeCheck } from '@foko/type-check'
 
 import { select } from './select'
 import * as Errors from '../errors'
-import { isDefined, delay, any } from '../utils'
+import { isDefined, any } from '../utils'
 import { after as timeoutAfter } from '../timeout/after'
 import { Deferred, defer } from '../types'
 
@@ -20,7 +20,6 @@ interface IChannel<T> {
 
 interface ChannelConfig {
   bufferSize: number
-  pollInterval: number
 }
 
 interface PutResult {
@@ -33,16 +32,19 @@ interface TakeResult<T> {
 }
 
 class BlockingChannel<T> implements IChannel<T> {
-  private buffer: {
+  private readonly buffer: {
     value: T
     p: Deferred<void>
   }[] = []
-
-  constructor(
-    private readonly config: ChannelConfig
-  ) {}
+  private readonly takers: Deferred<T>[] = []
 
   async put(value: T): Promise<void> {
+    const nextTaker = this.takers.shift()
+    if (nextTaker) {
+      nextTaker.resolve(value)
+      return
+    }
+
     const p = defer<void>()
     this.buffer.push({
       value,
@@ -57,8 +59,9 @@ class BlockingChannel<T> implements IChannel<T> {
       return value as T
     }
 
-    await delay(this.config.pollInterval)
-    return this.take()
+    const p = defer<T>()
+    this.takers.push(p)
+    return p.promise
   }
 
   select() {
@@ -79,29 +82,55 @@ class BlockingChannel<T> implements IChannel<T> {
 
 class BufferedChannel<T> implements IChannel<T> {
   private readonly buffer: T[] = []
+  private readonly putters: {
+    putSignal: Deferred<void>
+    takeSignal: Deferred<T>
+  }[] = []
+  private readonly takers: Deferred<T>[] = []
 
   constructor(
     private readonly config: ChannelConfig
   ) {}
-  
+
   async put(v: T): Promise<void> {
+    // try to pass it to the next taker first
+    const nextTaker = this.takers.pop()
+    if (nextTaker) {
+      nextTaker.resolve(v)
+      return
+    }
+
+    // if buffer is full, add a signal listener that
+    // will wait for room before pushing
     if (this.buffer.length === this.config.bufferSize) {
-      await delay(this.config.pollInterval)
-      return this.put(v)
+      const putSignal = defer<void>()
+      const takeSignal = defer<T>()
+      this.putters.push({
+        putSignal,
+        takeSignal,
+      })
+
+      await putSignal.promise
+      takeSignal.resolve(v)
+      return
     }
 
     this.buffer.push(v)
   }
-  
+
   async take(): Promise<T> {
     if (this.buffer.length === 0) {
-      return new Promise<T>((resolve, reject) => {
-        setTimeout(() => {
-          this.take().then(resolve, reject)
-        }, this.config.pollInterval)
-      })
+      const nextPutter = this.putters.shift()
+      if (nextPutter) {
+        nextPutter.putSignal.resolve()
+        return nextPutter.takeSignal.promise
+      }
+
+      const p = defer<T>()
+      this.takers.push(p)
+      return p.promise
     }
-    
+
     return this.buffer.shift() as T
   }
 
@@ -145,25 +174,19 @@ export class Channel<T> {
 
     const config: ChannelConfig = {
       bufferSize: 0,
-      pollInterval: 10,
     }
     
     typeCheck('object', c)
     typeCheck('number?', c.bufferSize)
-    typeCheck('number?', c.pollInterval)
       
     if (isDefined(c.bufferSize)) {
       config.bufferSize = c.bufferSize as any
-    }
-      
-    if (isDefined(c.pollInterval)) {
-      config.pollInterval = c.pollInterval as any
     }
 
     if (config.bufferSize > 0) {
       this.chan = new BufferedChannel(config) as any
     } else {
-      this.chan = new BlockingChannel(config) as any
+      this.chan = new BlockingChannel() as any
     }
   }
 
