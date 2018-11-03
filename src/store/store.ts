@@ -16,6 +16,13 @@ export interface SetOptions {
   expires?: number
 }
 
+export interface StoreTx {
+  exec<T extends any[]>(): Promise<T | void>
+
+  hincr(namespace: string, key: string): StoreTx
+  hset(namespace: string, key: string, value: any): StoreTx
+}
+
 export interface Store {
   /**
    * Increment a stored value atomically.
@@ -140,4 +147,9 @@ export interface Store {
    * @param timeout the max time to wait for an item to be available
    */
   blpop<T>(listName: string, timeout: number): Promise<T | void>
+
+  /**
+   * Starts a new transaction.
+   */
+  multi(): StoreTx
 }

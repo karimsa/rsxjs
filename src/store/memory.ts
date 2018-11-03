@@ -5,14 +5,42 @@
  */
 
 import { makeChan, chan } from '../channel'
-import { Store, SetOptions } from './store'
+import { Store, SetOptions, StoreTx } from './store'
 
 // use a universal map to stay consistent with distributed
 // maps like redis
 let map: Map<string, any>
 
+class SyncMemoryStore {
+  private readonly map: Map<string, any> = map = map || new Map()
+
+  hget(namespace: string, key: string, defaultValue?: any) {
+    const map: Map<string, any> | void = this.map.get(namespace)
+    if (!map) {
+      return defaultValue
+    }
+
+    return map.get(key) || defaultValue
+  }
+
+  hset<T>(namespace: string, key: string, value: T) {
+    const map: Map<string, any> = this.map.get(namespace) || new Map<string, any>()
+    this.map.set(namespace, map)
+    map.set(key, value)
+  }
+
+  hincr(namespace: string, key: string) {
+    return this.hset(namespace, key, 1 + this.hget(namespace, key, 0))
+  }
+
+  hdecr(namespace: string, key: string) {
+    return this.hset(namespace, key, -1 + this.hget(namespace, key, 0))
+  }
+}
+
 export class MemoryStore implements Store {
   private readonly map: Map<string, any> = map = map || new Map()
+  private readonly _store = new SyncMemoryStore()
 
   async incr(key: string): Promise<void> {
     this.map.set(key, (this.map.get(key)|0) + 1)
@@ -48,26 +76,19 @@ export class MemoryStore implements Store {
   async hget<T>(namespace: string, key: string, defaultValue: T): Promise<T>;
 
   async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
-    const map: Map<string, any> | void = this.map.get(namespace)
-    if (!map) {
-      return defaultValue
-    }
-
-    return map.get(key) || defaultValue
+    return this._store.hget(namespace, key, defaultValue)
   }
 
   async hset<T>(namespace: string, key: string, value: T): Promise<void> {
-    const map: Map<string, any> = this.map.get(namespace) || new Map<string, any>()
-    this.map.set(namespace, map)
-    map.set(key, value)
+    return this._store.hset(namespace, key, value)
   }
 
   async hincr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, 1 + (await this.hget(namespace, key, 0)))
+    return this._store.hincr(namespace, key)
   }
 
   async hdecr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
+    return this._store.hdecr(namespace, key)
   }
 
   async rpush<T>(listName: string, value: T): Promise<void> {
@@ -118,5 +139,42 @@ export class MemoryStore implements Store {
     if (q) {
       return (await q.take(timeout)).value
     }
+  }
+
+  multi() {
+    const cmdBuffer: {
+      cmd: string
+      args: any[]
+    }[] = []
+
+    const store = this._store
+    const tx: StoreTx = {
+      hset(ns, key, value) { return addToBuffer('hset', ns, key, value) },
+      hincr(ns, key) { return addToBuffer('hincrby', ns, key, 1) },
+
+      async exec() {
+        for (const { cmd, args } of cmdBuffer) {
+          switch (cmd) {
+            case 'hset':
+              store.hset(args[0], args[1], args[2])
+              break
+
+            case 'hincr':
+              store.hincr(args[0], args[1])
+              break
+
+            default:
+              throw new Error(`Unrecognized command: ${cmd}`)
+          }
+        }
+      },
+    }
+
+    function addToBuffer(cmd: string, ...args: any[]) {
+      cmdBuffer.push({ cmd, args })
+      return tx
+    }
+
+    return tx
   }
 }

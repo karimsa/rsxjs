@@ -7,7 +7,7 @@
 import { Redis, RedisOptions } from 'ioredis'
 import createDebugger from 'debug'
 
-import { Store, SetOptions } from './store'
+import { Store, SetOptions, StoreTx } from './store'
 
 const debug = createDebugger('rsxjs')
 
@@ -104,5 +104,25 @@ export class RedisStore implements Store {
 
   async blpop<T>(listName: string, timeout: number): Promise<T | void> {
     return JSON.parse(await this.redis.blpop(listName, String(timeout)))
+  }
+
+  multi(): StoreTx {
+    const tx = this.redis.multi()
+
+    return {
+      hset(ns: string, key: string, value: any) {
+        tx.hset(ns, key, value)
+        return this
+      },
+
+      hincr(ns: string, key: string) {
+        tx.hincrby(ns, key, 1)
+        return this
+      },
+
+      exec() {
+        return tx.exec()
+      },
+    }
   }
 }
