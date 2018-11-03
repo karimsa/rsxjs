@@ -17,5 +17,5 @@ test('fromAsync()#failFast', async t => {
   work()
   work()
 
-  await t.throws(work())
+  await t.throwsAsync(work())
 })

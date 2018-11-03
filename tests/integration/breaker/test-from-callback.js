@@ -49,24 +49,24 @@ test.only('Breaker.fromCallback()', async t => {
 
   // throw real error now
   shouldThrowError = true
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 2)
 
   // should still throw error now that breaker is tripped
   shouldThrowError = false
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   // still only called twice, breaker has been tripped
   t.is(readFileSpy.callCount, 2)
 
   // should call function again after timeout (half-open)
   clock.tick(TIMEOUT + 1)
   shouldThrowError = true
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 3, 'should have run a third time')
 
   // breaker should be tripped again
   shouldThrowError = false
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 3)
 
   // breaker should be half-open again

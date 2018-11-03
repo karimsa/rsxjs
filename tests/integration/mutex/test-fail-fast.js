@@ -19,5 +19,5 @@ test('Mutex#failFast', async t => {
   fn()
 
   // should fail instead of waiting
-  await t.throws(fn())
+  await t.throwsAsync(fn())
 })
