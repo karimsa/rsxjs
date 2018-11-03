@@ -21,13 +21,13 @@ export interface Store {
    * Increment a stored value atomically.
    * @param key key to increment
    */
-  incr(key: string): Promise<void>
+  incr(key: string): Promise<number>
 
   /**
    * Decrement a stored value atomically.
    * @param key key to decrement
    */
-  decr(key: string): Promise<void>
+  decr(key: string): Promise<number>
 
   /**
    * Stores a given value at a given key.
@@ -82,13 +82,13 @@ export interface Store {
    * Increment a stored value atomically within a hashmap.
    * @param key key to increment
    */
-  hincr(namespace: string, key: string): Promise<void>
+  hincr(namespace: string, key: string): Promise<number>
 
   /**
    * Decrement a stored value atomically within a hashmap.
    * @param key key to decrement
    */
-  hdecr(namespace: string, key: string): Promise<void>
+  hdecr(namespace: string, key: string): Promise<number>
 
   /**
    * Removes a value from the store.

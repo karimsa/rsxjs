@@ -14,7 +14,7 @@ export class State<T extends { [key: string]: any }> {
   constructor({ store, namespace, defaults }: {
     store?: Store
     namespace?: string
-    defaults?: T
+    defaults: T
   }) {
     if (!store) {
       throw new Error(`Store is required to create a state`)
@@ -39,11 +39,11 @@ export class State<T extends { [key: string]: any }> {
     return this.store.hset(this.namespace, key as string, value)
   }
 
-  incr<K extends keyof T>(key: K): Promise<void> {
+  incr<K extends keyof T>(key: K): Promise<number> {
     return this.store.hincr(this.namespace, key as string)
   }
 
-  decr<K extends keyof T>(key: K): Promise<void> {
+  decr<K extends keyof T>(key: K): Promise<number> {
     return this.store.hdecr(this.namespace, key as string)
   }
 

@@ -34,6 +34,10 @@ export {
 } from './store'
 
 export {
+  RWMutex,
+} from './rwmutex'
+
+export {
   Breaker,
   Mutex,
   Pool,

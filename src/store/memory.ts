@@ -14,12 +14,14 @@ let map: Map<string, any>
 export class MemoryStore implements Store {
   private readonly map: Map<string, any> = map = map || new Map()
 
-  async incr(key: string): Promise<void> {
+  async incr(key: string): Promise<number> {
     this.map.set(key, (this.map.get(key)|0) + 1)
+    return this.map.get(key)
   }
 
-  async decr(key: string): Promise<void> {
+  async decr(key: string): Promise<number> {
     this.map.set(key, (this.map.get(key)|0) - 1)
+    return this.map.get(key)
   }
 
   async get<T>(key: string): Promise<T | void> {
@@ -62,12 +64,16 @@ export class MemoryStore implements Store {
     map.set(key, value)
   }
 
-  async hincr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, 1 + (await this.hget(namespace, key, 0)))
+  async hincr(namespace: string, key: string): Promise<number> {
+    const ctr = 1 + (await this.hget(namespace, key, 0))
+    this.hset(namespace, key, ctr)
+    return ctr
   }
 
-  async hdecr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
+  async hdecr(namespace: string, key: string): Promise<number> {
+    const ctr = -1 + (await this.hget(namespace, key, 0))
+    await this.hset(namespace, key, ctr)
+    return ctr
   }
 
   async rpush<T>(listName: string, value: T): Promise<void> {
