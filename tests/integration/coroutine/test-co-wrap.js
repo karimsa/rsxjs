@@ -3,7 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { test } from 'ava'
+import test from 'ava'
 
 import { co } from '../../../'
 
@@ -15,7 +15,7 @@ test('co: wrapped routine', async t => {
     yield Promise.reject(new Error('blah'))
   })
 
-  const e = await t.throws(fn())
+  const e = await t.throwsAsync(fn())
   t.is(state, 3)
   t.is(String(e), 'Error: blah')
 })

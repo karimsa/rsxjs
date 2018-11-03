@@ -3,7 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { test } from 'ava'
+import test from 'ava'
 import { spy } from 'sinon'
 
 import { Deferral } from '../../../'
@@ -15,7 +15,7 @@ test('on failure', async t => {
     throw new Error('Failure')
   })
 
-  const e = await t.throws(op())
+  const e = await t.throwsAsync(op())
   t.is(String(e), 'Error: Failure')
   t.true(fn.calledOnce)
 })
@@ -27,7 +27,7 @@ test('on failure with generator', async t => {
     throw new Error('Failure')
   })
 
-  const e = await t.throws(op())
+  const e = await t.throwsAsync(op())
   t.is(String(e), 'Error: Failure')
   t.true(fn.calledOnce)
 })
