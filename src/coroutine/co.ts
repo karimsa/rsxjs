@@ -5,7 +5,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import * as Deferral from '../deferral'
+import * as Deferral from '../deferral/from-async'
 import { DeferFunction } from '../deferral/types'
 
 export interface Cancelable<T> extends Promise<T> {
