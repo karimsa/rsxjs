@@ -3,7 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { test } from 'ava'
+import test from 'ava'
 import { v4 as uuid } from 'uuid'
 
 import { MemoryStore, delay } from '../../dist'

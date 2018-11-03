@@ -3,7 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { test } from 'ava'
+import test from 'ava'
 
 import { delay } from '../../../'
 
