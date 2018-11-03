@@ -39,24 +39,24 @@ test('Breaker.fromAsync()', async t => {
 
   // throw real error now
   shouldThrowError = true
-  t.is((await t.throws( breakerFn() )).message, 'Failure!')
+  t.is((await t.throwsAsync( breakerFn() )).message, 'Failure!')
   t.is(nCalls, 2)
 
   // should still throw error now that breaker is tripped
   shouldThrowError = false
-  t.is((await t.throws( breakerFn() )).message, 'Failure!')
+  t.is((await t.throwsAsync( breakerFn() )).message, 'Failure!')
   // still only called twice, breaker has been tripped
   t.is(nCalls, 2)
 
   // should call function again after timeout (half-open)
   clock.tick(TIMEOUT + 1)
   shouldThrowError = true
-  t.is((await t.throws( breakerFn() )).message, 'Failure!')
+  t.is((await t.throwsAsync( breakerFn() )).message, 'Failure!')
   t.is(nCalls, 3, 'should have run a third time')
 
   // breaker should be tripped again
   shouldThrowError = false
-  t.is((await t.throws( breakerFn() )).message, 'Failure!')
+  t.is((await t.throwsAsync( breakerFn() )).message, 'Failure!')
   t.is(nCalls, 3)
 
   // breaker should be half-open again

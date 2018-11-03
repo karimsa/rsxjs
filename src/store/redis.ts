@@ -11,6 +11,12 @@ import { Store, SetOptions } from './store'
 
 const debug = createDebugger('rsxjs')
 
+function parse(text: string | null): any {
+  if (text) {
+    return JSON.parse(text)
+  }
+}
+
 export class RedisStore implements Store {
   private readonly redis: Redis
 
@@ -19,7 +25,7 @@ export class RedisStore implements Store {
   }
 
   async get<T>(key: string): Promise<T> {
-    return JSON.parse(await this.redis.get(key))
+    return parse(await this.redis.get(key))
   }
 
   async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
@@ -59,8 +65,8 @@ export class RedisStore implements Store {
     return this.redis.hincrby(namespace, key, -1)
   }
 
-  del(key: string): Promise<void> {
-    return this.redis.del(key)
+  async del(key: string): Promise<void> {
+    await this.redis.del(key)
   }
 
   async hset<T>(namespace: string, key: string, value: T): Promise<void> {
@@ -69,7 +75,7 @@ export class RedisStore implements Store {
 
   async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
     try {
-      return JSON.parse(await this.redis.hget(namespace, key)) || defaultValue
+      return parse(await this.redis.hget(namespace, key)) || defaultValue
     } catch (err) {
       debug(`failed to hget ${namespace} ${key} => ${err}`)
       return defaultValue

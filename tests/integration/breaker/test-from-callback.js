@@ -1,5 +1,5 @@
 /**
- * @file tests/breaker/test-from-sync.js
+ * @file tests/integration/breaker/test-from-callback.js
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
@@ -11,7 +11,7 @@ import { resolve as resolvePath } from 'path'
 
 import { Breaker } from '../../../'
 
-test('Breaker.fromCallback()', async t => {
+test.only('Breaker.fromCallback()', async t => {
   const MAX_ERRORS = 1 // trip after one error
   const TIMEOUT = 500 // wait for 500 seconds in between states
 
@@ -26,11 +26,13 @@ test('Breaker.fromCallback()', async t => {
   // just for testing easier
   const EXPECTED_DATA = readFileSync(__filename, 'utf8')
   const breakerFn = () => new Promise((resolve, reject) => {
-    _breakerFn(
+    const filename = (
       shouldThrowError ? 
-      resolvePath(__dirname, String(Math.random())) :
-      __filename
-    , 'utf8', (err, data) => {
+        resolvePath(__dirname, String(Math.random())) :
+        __filename
+    )
+
+    _breakerFn(filename, 'utf8', (err, data) => {
       if (err) reject(err)
       else resolve(data)
     })
@@ -47,24 +49,24 @@ test('Breaker.fromCallback()', async t => {
 
   // throw real error now
   shouldThrowError = true
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 2)
 
   // should still throw error now that breaker is tripped
   shouldThrowError = false
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   // still only called twice, breaker has been tripped
   t.is(readFileSpy.callCount, 2)
 
   // should call function again after timeout (half-open)
   clock.tick(TIMEOUT + 1)
   shouldThrowError = true
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 3, 'should have run a third time')
 
   // breaker should be tripped again
   shouldThrowError = false
-  await t.throws( breakerFn() )
+  await t.throwsAsync( breakerFn() )
   t.is(readFileSpy.callCount, 3)
 
   // breaker should be half-open again

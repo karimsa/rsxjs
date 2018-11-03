@@ -3,7 +3,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { test } from 'ava'
+import test from 'ava'
 
 import { Semaphore } from '../../../'
 
@@ -17,5 +17,5 @@ test('fromAsync()#failFast', async t => {
   work()
   work()
 
-  await t.throws(work())
+  await t.throwsAsync(work())
 })

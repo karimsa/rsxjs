@@ -28,24 +28,24 @@
   },
   "homepage": "https://github.com/karimsa/rsxjs#readme",
   "devDependencies": {
-    "@babel/core": "^7.0.0-beta.54",
-    "@babel/polyfill": "^7.0.0-beta.54",
-    "@babel/preset-env": "^7.0.0-beta.54",
-    "@babel/register": "^7.0.0-beta.54",
-    "@types/debug": "0.0.30",
-    "@types/ioredis": "^4.0.1",
-    "@types/node": "^10.5.2",
+    "@babel/core": "^7.1.2",
+    "@babel/polyfill": "^7.0.0",
+    "@babel/preset-env": "^7.1.0",
+    "@babel/register": "^7.0.0",
+    "@types/debug": "0.0.31",
+    "@types/ioredis": "^4.0.3",
+    "@types/node": "^10.12.2",
     "@types/uuid": "^3.4.4",
-    "ava": "^1.0.0-beta.3",
-    "bluebird": "^3.5.1",
-    "codecov": "^3.0.4",
-    "lolex": "^2.7.1",
-    "nyc": "^12.0.2",
-    "rollup": "^0.63.4",
-    "rollup-plugin-babel": "^4.0.0-beta.7",
-    "rollup-plugin-typescript2": "^0.16.1",
-    "sinon": "^6.1.4",
-    "typescript": "^2.9.2"
+    "ava": "^1.0.0-rc.1",
+    "bluebird": "^3.5.2",
+    "codecov": "^3.1.0",
+    "lolex": "^3.0.0",
+    "nyc": "^13.1.0",
+    "rollup": "^0.66.6",
+    "rollup-plugin-babel": "^4.0.3",
+    "rollup-plugin-typescript2": "^0.17.2",
+    "sinon": "^7.1.1",
+    "typescript": "^3.1.6"
   },
   "ava": {
     "cache": true,
@@ -70,11 +70,11 @@
     }
   },
   "optionalDependencies": {
-    "ioredis": "^4.0.0"
+    "ioredis": "^4.2.0"
   },
   "dependencies": {
     "@foko/type-check": "0.0.4",
-    "debug": "^3.1.0",
+    "debug": "^4.1.0",
     "uuid": "^3.3.2"
   }
 }

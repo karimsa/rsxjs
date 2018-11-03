@@ -6,7 +6,7 @@
 
 <p align="center">
   <a href="https://semaphoreci.com/karimsa/rsxjs">
-    <img src="https://semaphoreci.com/api/v1/karimsa/rsxjs/branches/bkp/badge.svg" alt="Build Status">
+    <img src="https://semaphoreci.com/api/v1/karimsa/rsxjs/branches/master/badge.svg" alt="Build Status">
   </a>
 
   <a href="https://codecov.io/gh/karimsa/rsxjs">
