@@ -50,7 +50,7 @@ export class Channel<T> implements IChannel<T> {
 
   // this makes the select() magic work
   private selectSymbol = Symbol()
-  private static chanMap = new WeakMap<Symbol, Channel<any>>()
+  private static chanMap = new Map<Symbol, Channel<any>>()
 
   ;[Symbol.toPrimitive]() { return this.selectSymbol }
 
