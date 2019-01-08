@@ -50,12 +50,12 @@ export class Channel<T> implements IChannel<T> {
 
   // this makes the select() magic work
   private selectSymbol = Symbol()
-  private static chanMap: { [key in any]: Channel<any> } = {}
+  private static chanMap = new WeakMap<Symbol, Channel<any>>()
 
   ;[Symbol.toPrimitive]() { return this.selectSymbol }
 
   static getChannel<T>(sym: symbol): chan<T> {
-    const chan = Channel.chanMap[sym as any]
+    const chan = Channel.chanMap.get(sym)
     if (!chan) {
       throw new Error(`Failed to fetch closed channel`)
     }
@@ -68,7 +68,7 @@ export class Channel<T> implements IChannel<T> {
       bufferSize: 0,
     }
   ) {
-    Channel.chanMap[this.selectSymbol as any] = this
+    Channel.chanMap.set(this.selectSymbol, this)
 
     typeCheck('object', config)
     typeCheck('number?', config.bufferSize)
@@ -76,9 +76,9 @@ export class Channel<T> implements IChannel<T> {
 
   close(): void {
     this.isOpen = false
-    delete Channel.chanMap[this.selectSymbol as any]
+    Channel.chanMap.delete(this.selectSymbol)
   }
-  
+
   private async _put(dir: 'left' | 'right', value: T, timeout?: number): Promise<PutResult> {
     if (!this.isOpen) {
       debug(`refusing to put on a closed channel`)
