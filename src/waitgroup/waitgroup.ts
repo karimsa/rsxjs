@@ -4,8 +4,7 @@
  * @copyright 2018-present Karim Alibhai. All rights reserved.
  */
 
-import { typeCheck } from '@foko/type-check'
-import * as Timeout from '../timeout'
+import { defer, Deferred } from '../types'
 
 type Waitable =
   number |
@@ -13,105 +12,59 @@ type Waitable =
   Promise<any> |
   (() => Promise<any>)
 
-interface IWaitGroup<T extends Waitable> {
-  add(v?: T): void
-  wait(t?: number): Promise<void>
-}
+export class WaitGroup {
+  private numTasks: number = 0
+  private waiters: Deferred<void>[] = []
 
-class RawWaitGroup implements IWaitGroup<number> {
-  private stackSize: number = 0
-  
-  add(ctr: number = 1): void {
-    if (typeof ctr !== 'number' || ctr !== Math.floor(ctr)) {
-      throw new Error(`Unexpected value given to add: ${ctr}`)
-    }
-    
-    this.stackSize += ctr
-  }
-  
-  done(): void {
-    this.stackSize -= 1
-    
-    if (this.stackSize < 0) {
-      this.stackSize = 0
-      throw new Error(`WaitGroup.done() called too many times`)
-    }
-  }
-  
-  wait(timeout?: number): Promise<void> {
-    typeCheck('number?', timeout)
-    
-    const wg = this
-    const fn = () => new Promise<void>(done => {
-      function test() {
-        if (wg.stackSize === 0) {
-          return done()
-        }
-        
-        // simply return to the event loop until next stack completion
-        setTimeout(test, 0)
-      }
-      
-      test()
-    })
-    
-    if (typeof timeout === 'number') {
-      return Timeout.fromAsync(fn, {
-        timeout,
-      })()
-    }
-    
-    return fn()
-  }
-}
-
-class AsyncWaitGroup implements IWaitGroup<Promise<any>> {
-  private readonly wg = new RawWaitGroup()
-  
-  add(p: Promise<any>): void {
-    this.wg.add(1)
-    p.then(v => {
-      this.wg.done()
-      return v
-    }, err => {
-      this.wg.done()
-      throw err
-    })
-  }
-  
-  wait(t?: number): Promise<void> {
-    return this.wg.wait(t)
-  }
-}
-
-export class WaitGroup implements IWaitGroup<Waitable> {
-  private readonly wgCtr = new RawWaitGroup()
-  private readonly wgAsync = new AsyncWaitGroup()
-  
-  add(ctr: Waitable): void {
+  public add(ctr: Waitable): void {
     if (typeof ctr === 'number' || ctr === undefined || ctr === null) {
-      return this.wgCtr.add(ctr)
+      this.numTasks += ctr
+      return
     }
-    
+
     if (typeof ctr === 'function') {
       return this.add(ctr())
     }
     
     if ('then' in ctr && typeof ctr.then === 'function') {
-      return this.wgAsync.add(ctr)
+      this.numTasks++
+      ctr.then(() => { this.done() }, err => { this.done(err) })
+      return
     }
     
     throw new Error(`Unexpected value given to add: ${typeof ctr}`)
   }
-  
-  done(): void {
-    return this.wgCtr.done()
+
+  done(err?: Error): void {
+    // mark one completion
+    this.add(-1)
+    if (this.numTasks < 0) {
+      throw new Error(`WaitGroup.done() called too many times`)
+    }
+
+    // unblock all waiters
+    if (this.numTasks < 1) {
+      while (this.waiters.length > 0) {
+        const waiter = this.waiters.pop()
+        if (waiter) {
+          if (err) { waiter.reject(err) }
+          else { waiter.resolve() }
+        }
+      }
+    }
   }
-  
-  async wait(t?: number): Promise<void> {
-    await Promise.all([
-      this.wgCtr.wait(t),
-      this.wgAsync.wait(t),
-    ])
+
+  // create a new waiter with an optional timeout
+  wait(t?: number): Promise<void> {
+    const d = defer<void>()
+    this.waiters.push(d)
+    if (t) {
+      const timer = setTimeout(() => {
+        const i = this.waiters.indexOf(d)
+        this.waiters.splice(i, 1)
+      }, t)
+      d.promise.then(() => clearTimeout(timer))
+    }
+    return d.promise
   }
 }
