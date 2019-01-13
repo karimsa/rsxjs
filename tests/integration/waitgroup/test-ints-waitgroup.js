@@ -24,3 +24,8 @@ test('waitgroup: with ints', async t => {
   const dur = Date.now() - start
   t.true(dur >= DELAY, `Took ${dur}ms, should've taken more than ${DELAY}ms`)
 })
+
+test('waitgroup: should not hang on empty waitgroup', async t => {
+  await new WaitGroup().wait()
+  t.true(true, 'WaitGroup should not hang')
+})

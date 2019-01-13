@@ -56,6 +56,10 @@ export class WaitGroup {
 
   // create a new waiter with an optional timeout
   wait(t?: number): Promise<void> {
+    if (this.numTasks < 1) {
+      return Promise.resolve()
+    }
+
     const d = defer<void>()
     this.waiters.push(d)
     if (t) {
