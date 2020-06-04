@@ -8,10 +8,6 @@
   <a href="https://github.com/karimsa/rsxjs/actions">
     <img src="https://github.com/karimsa/rsxjs/workflows/CI/badge.svg" alt="Build Status">
   </a>
-
-  <a href="https://codecov.io/gh/karimsa/rsxjs">
-    <img src="https://codecov.io/gh/karimsa/rsxjs/branch/master/graph/badge.svg" alt="Coverage">
-  </a>
 </p>
 
 **Table of Contents:**
