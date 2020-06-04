@@ -1,14 +1,11 @@
 name: CI
 
-on:
-  push:
-  issue_comment:
-    types: [created]
+on: [push]
 
 env:
   CI: true
   NODE_ENV: test
-  NPM_AUTH_TOKEN: 
+  NPM_AUTH_TOKEN: ${{ secrets.NPM_AUTH_TOKEN }}
 
 jobs:
   build:
@@ -41,5 +38,5 @@ jobs:
         set -e
         npm run clean
         NODE_ENV=production npm run build
-        echo "" > ~/.npmrc
+        echo "//registry.npmjs.org/:_authToken=$NPM_AUTH_TOKEN" > ~/.npmrc
         npm publish
