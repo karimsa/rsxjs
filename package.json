@@ -32,6 +32,7 @@
     "@babel/polyfill": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "@babel/register": "^7.0.0",
+    "@types/check-types": "^7.3.1",
     "@types/debug": "0.0.31",
     "@types/ioredis": "^4.0.3",
     "@types/node": "^10.12.2",
@@ -73,7 +74,7 @@
     "ioredis": "^4.2.0"
   },
   "dependencies": {
-    "@foko/type-check": "0.0.4",
+    "check-types": "^11.1.2",
     "debug": "^4.1.0",
     "uuid": "^3.3.2"
   }
