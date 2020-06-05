@@ -5,7 +5,7 @@
  */
 
 import createDebug from 'debug'
-import { typeCheck } from '@foko/type-check'
+import check from 'check-types'
 
 const debug = createDebug('rsxjs:channel')
 
@@ -70,8 +70,8 @@ export class Channel<T> implements IChannel<T> {
   ) {
     Channel.chanMap.set(this.selectSymbol, this)
 
-    typeCheck('object', config)
-    typeCheck('number?', config.bufferSize)
+    check.assert.object(config)
+    check.assert.maybe.number(config.bufferSize)
   }
 
   close(): void {
@@ -206,7 +206,7 @@ export class Channel<T> implements IChannel<T> {
       }
     }
 
-    const poppedValue = dir === 'left' ? 
+    const poppedValue = dir === 'left' ?
       this.buffer.shift() as T :
       this.buffer.pop() as T
 
