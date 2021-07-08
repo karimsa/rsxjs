@@ -13,23 +13,23 @@ import { defaults, TimeoutOptionsGiven } from './types'
  * @returns {AsyncFunction<T>} an async function with identical behavior, but will timeout
  */
 export function fromPromise<T>(
-  promise: Promise<T>,
-  _options?: TimeoutOptionsGiven
+	promise: Promise<T>,
+	_options?: TimeoutOptionsGiven,
 ): Promise<T> {
-  const options = defaults(_options)
+	const options = defaults(_options)
 
-  return new Promise(async (resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error(Errors.TIMEOUT))
-    }, options.timeout)
+	return new Promise(async (resolve, reject) => {
+		const timeout = setTimeout(() => {
+			reject(new Error(Errors.TIMEOUT))
+		}, options.timeout)
 
-    try {
-      const v = await promise
-      clearTimeout(timeout)
-      resolve(v)
-    } catch (err) {
-      clearTimeout(timeout)
-      reject(err)
-    }
-  })
+		try {
+			const v = await promise
+			clearTimeout(timeout)
+			resolve(v)
+		} catch (err) {
+			clearTimeout(timeout)
+			reject(err)
+		}
+	})
 }

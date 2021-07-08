@@ -8,7 +8,7 @@ import { Mutex } from './mutex'
 import { MutexOptions } from './types'
 
 export async function lock(options: MutexOptions & { name: string }) {
-  return {
-    unlock: await (new Mutex(options)).lock(),
-  }
+	return {
+		unlock: await new Mutex(options).lock(),
+	}
 }

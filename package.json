@@ -1,81 +1,58 @@
 {
-  "name": "rsxjs",
-  "version": "0.6.0",
-  "description": "Resilience Extensions for JS.",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "nyc ava -v",
-    "build": "rollup -c",
-    "clean": "rm -rf dist",
-    "coverage": "codecov"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/karimsa/rsxjs.git"
-  },
-  "keywords": [
-    "resilience",
-    "patterns",
-    "data",
-    "structures",
-    "extensions",
-    "chaos"
-  ],
-  "author": "Karim Alibhai",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/karimsa/rsxjs/issues"
-  },
-  "homepage": "https://github.com/karimsa/rsxjs#readme",
-  "devDependencies": {
-    "@babel/core": "^7.1.2",
-    "@babel/polyfill": "^7.0.0",
-    "@babel/preset-env": "^7.1.0",
-    "@babel/register": "^7.0.0",
-    "@types/check-types": "^7.3.1",
-    "@types/debug": "0.0.31",
-    "@types/ioredis": "^4.0.3",
-    "@types/node": "^10.12.2",
-    "@types/uuid": "^3.4.4",
-    "ava": "^1.0.0-rc.1",
-    "bluebird": "^3.5.2",
-    "codecov": "^3.1.0",
-    "lolex": "^3.0.0",
-    "nyc": "^13.1.0",
-    "rollup": "^0.66.6",
-    "rollup-plugin-babel": "^4.0.3",
-    "rollup-plugin-typescript2": "^0.17.2",
-    "sinon": "^7.1.1",
-    "typescript": "^3.1.6"
-  },
-  "ava": {
-    "cache": true,
-    "timeout": "10s",
-    "files": [
-      "tests/**/test-*.js"
-    ],
-    "require": [
-      "@babel/register",
-      "@babel/polyfill"
-    ],
-    "babel": {
-      "testOptions": {
-        "babelrc": false,
-        "only": [
-          "tests/**/*.js"
-        ],
-        "presets": [
-          "@babel/preset-env"
-        ]
-      }
-    }
-  },
-  "optionalDependencies": {
-    "ioredis": "^4.2.0"
-  },
-  "dependencies": {
-    "check-types": "^11.1.2",
-    "debug": "^4.1.0",
-    "uuid": "^3.3.2"
-  }
+	"name": "rsxjs",
+	"version": "0.6.0",
+	"description": "Resilience Extensions for JS.",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "tsc --emitDeclarationOnly --outDir dist && jest --runInBand",
+		"build": "esbuild src/index.ts --bundle --external:uuid --external:check-types --external:debug --external:ioredis --outfile=dist/index.js --platform=node",
+		"lint": "prettier --check './src/**'",
+		"format": "prettier --write './src/**'",
+		"clean": "rm -rf dist"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/karimsa/rsxjs.git"
+	},
+	"keywords": [
+		"resilience",
+		"patterns",
+		"data",
+		"structures",
+		"extensions",
+		"chaos"
+	],
+	"author": "Karim Alibhai",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/karimsa/rsxjs/issues"
+	},
+	"homepage": "https://github.com/karimsa/rsxjs#readme",
+	"devDependencies": {
+		"@babel/core": "^7.14.6",
+		"@babel/polyfill": "^7.0.0",
+		"@babel/preset-env": "^7.14.7",
+		"@babel/register": "^7.0.0",
+		"@types/check-types": "^7.3.1",
+		"@types/debug": "0.0.31",
+		"@types/ioredis": "^4.0.3",
+		"@types/node": "^10.12.2",
+		"@types/uuid": "^3.4.4",
+		"babel-jest": "^27.0.6",
+		"bluebird": "^3.5.2",
+		"esbuild": "^0.12.15",
+		"jest": "^27.0.6",
+		"lolex": "^3.0.0",
+		"prettier": "^2.3.2",
+		"sinon": "^7.1.1",
+		"typescript": "^4.3.5"
+	},
+	"optionalDependencies": {
+		"ioredis": "^4.2.0"
+	},
+	"dependencies": {
+		"check-types": "^11.1.2",
+		"debug": "^4.1.0",
+		"uuid": "^3.3.2"
+	}
 }

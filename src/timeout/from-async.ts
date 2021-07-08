@@ -14,12 +14,12 @@ import { fromPromise } from './from-promise'
  * @returns {Promises<T>} resolves with the promise's value, or rejects with a timeout
  */
 export function fromAsync<T>(
-  cb: AsyncFunction<T>,
-  options?: TimeoutOptionsGiven
+	cb: AsyncFunction<T>,
+	options?: TimeoutOptionsGiven,
 ): AsyncFunction<T> {
-  return function asyncTimeout(this: any, ...args: any[]): Promise<T> {
-    return fromPromise(cb.apply(this, args), options)
-  }
+	return function asyncTimeout(this: any, ...args: any[]): Promise<T> {
+		return fromPromise(cb.apply(this, args), options)
+	}
 }
 
 /**
@@ -27,7 +27,7 @@ export function fromAsync<T>(
  * @param {TimeoutOptionsGiven} options set of options to use when creating the timeout
  */
 export function factory<T>(options: TimeoutOptionsGiven) {
-  return function fromFactory(fn: AsyncFunction<T>) {
-    return fromAsync(fn, options)
-  }
+	return function fromFactory(fn: AsyncFunction<T>) {
+		return fromAsync(fn, options)
+	}
 }

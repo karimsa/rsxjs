@@ -7,8 +7,6 @@
 import { co } from '../coroutine'
 import { AsyncFunction } from '../types'
 
-export function fromGenerator<T>(
-  fn: GeneratorFunction
-): AsyncFunction<T> {
-  return co.wrap<T>(fn)
+export function fromGenerator<T>(fn: GeneratorFunction): AsyncFunction<T> {
+	return co.wrap<T>(fn)
 }

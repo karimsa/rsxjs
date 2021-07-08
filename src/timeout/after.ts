@@ -6,10 +6,10 @@
 import { makeChan, chan } from '../channel'
 
 export function after(timeout: number): chan<void> {
-  const quit = makeChan<void>({ bufferSize: 1 })
-  setTimeout(() => {
-    quit.put(undefined)
-    quit.close()
-  }, timeout)
-  return quit
+	const quit = makeChan<void>({ bufferSize: 1 })
+	setTimeout(() => {
+		quit.put(undefined)
+		quit.close()
+	}, timeout)
+	return quit
 }

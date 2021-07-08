@@ -12,97 +12,114 @@ import { Store, SetOptions } from './store'
 const debug = createDebugger('rsxjs')
 
 function parse(text: string | null): any {
-  if (text) {
-    return JSON.parse(text)
-  }
+	if (text) {
+		return JSON.parse(text)
+	}
 }
 
 export class RedisStore implements Store {
-  private readonly redis: Redis
+	private readonly redis: Redis
 
-  constructor(options: RedisOptions) {
-    this.redis = new (require('ioredis'))(options)
-  }
+	constructor(options: RedisOptions) {
+		this.redis = new (require('ioredis'))(options)
+	}
 
-  async get<T>(key: string): Promise<T> {
-    return parse(await this.redis.get(key))
-  }
+	async get<T>(key: string): Promise<T> {
+		return parse(await this.redis.get(key))
+	}
 
-  async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
-    if (options) {
-      if (options.notExists && options.expires) {
-        await this.redis.set(key, JSON.stringify(value), 'NX', 'EX', Math.floor(options.expires / 1000))
-        return
-      }
+	async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
+		if (options) {
+			if (options.notExists && options.expires) {
+				await this.redis.set(
+					key,
+					JSON.stringify(value),
+					'NX',
+					'EX',
+					Math.floor(options.expires / 1000),
+				)
+				return
+			}
 
-      if (options.notExists) {
-        await this.redis.set(key, JSON.stringify(value), 'NX')
-        return
-      }
+			if (options.notExists) {
+				await this.redis.set(key, JSON.stringify(value), 'NX')
+				return
+			}
 
-      if (options.expires) {
-        await this.redis.set(key, JSON.stringify(value), 'EX', Math.floor(options.expires / 1000))
-        return
-      }
-    }
+			if (options.expires) {
+				await this.redis.set(
+					key,
+					JSON.stringify(value),
+					'EX',
+					Math.floor(options.expires / 1000),
+				)
+				return
+			}
+		}
 
-    await this.redis.set(key, JSON.stringify(value))
-  }
+		await this.redis.set(key, JSON.stringify(value))
+	}
 
-  async incr(key: string): Promise<void> {
-    await this.redis.incr(key)
-  }
+	async incr(key: string): Promise<void> {
+		await this.redis.incr(key)
+	}
 
-  async decr(key: string): Promise<void> {
-    await this.redis.decr(key)
-  }
+	async decr(key: string): Promise<void> {
+		await this.redis.decr(key)
+	}
 
-  async hincr(namespace: string, key: string): Promise<void> {
-    await this.redis.hincrby(namespace, key, 1)
-  }
+	async hincr(namespace: string, key: string): Promise<void> {
+		await this.redis.hincrby(namespace, key, 1)
+	}
 
-  async hdecr(namespace: string, key: string): Promise<void> {
-    await this.redis.hincrby(namespace, key, -1)
-  }
+	async hdecr(namespace: string, key: string): Promise<void> {
+		await this.redis.hincrby(namespace, key, -1)
+	}
 
-  async del(key: string): Promise<void> {
-    await this.redis.del(key)
-  }
+	async del(key: string): Promise<void> {
+		await this.redis.del(key)
+	}
 
-  async hset<T>(namespace: string, key: string, value: T): Promise<void> {
-    await this.redis.hset(namespace, key, JSON.stringify(value))
-  }
+	async hset<T>(namespace: string, key: string, value: T): Promise<void> {
+		await this.redis.hset(namespace, key, JSON.stringify(value))
+	}
 
-  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
-    try {
-      return parse(await this.redis.hget(namespace, key)) || defaultValue
-    } catch (err) {
-      debug(`failed to hget ${namespace} ${key} => ${err}`)
-      return defaultValue
-    }
-  }
+	async hget<T>(
+		namespace: string,
+		key: string,
+		defaultValue?: T,
+	): Promise<T | void> {
+		try {
+			return parse(await this.redis.hget(namespace, key)) || defaultValue
+		} catch (err) {
+			debug(`failed to hget ${namespace} ${key} => ${err}`)
+			return defaultValue
+		}
+	}
 
-  rpush(listName: string, value: any): Promise<void> {
-    return this.redis.rpush(listName, JSON.parse(value))
-  }
+	rpush(listName: string, value: any): Promise<number> {
+		return this.redis.rpush(listName, JSON.parse(value))
+	}
 
-  lpush(listName: string, value: any): Promise<void> {
-    return this.redis.lpush(listName, JSON.parse(value))
-  }
+	lpush(listName: string, value: any): Promise<number> {
+		return this.redis.lpush(listName, JSON.parse(value))
+	}
 
-  async rpop<T>(listName: string): Promise<T | void> {
-    return JSON.parse(await this.redis.rpop(listName))
-  }
+	async rpop<T>(listName: string): Promise<T | void> {
+		return JSON.parse(await this.redis.rpop(listName))
+	}
 
-  async lpop<T>(listName: string): Promise<T | void> {
-    return JSON.parse(await this.redis.lpop(listName))
-  }
+	async lpop<T>(listName: string): Promise<T | void> {
+		return JSON.parse(await this.redis.lpop(listName))
+	}
 
-  async brpop<T>(listName: string, timeout: number): Promise<T | void> {
-    return JSON.parse(await this.redis.brpop(listName, String(timeout)))
-  }
+	async brpop<T>(listName: string, timeout: number): Promise<T | void> {
+		const [_, data] = await this.redis.brpop(listName, String(timeout))
+		return JSON.parse(data)
+	}
 
-  async blpop<T>(listName: string, timeout: number): Promise<T | void> {
-    return JSON.parse(await this.redis.blpop(listName, String(timeout)))
-  }
+	async blpop<T>(listName: string, timeout: number): Promise<T | void> {
+		const [_, data] = await this.redis.blpop(listName, String(timeout))
+		return JSON.parse(data)
+	}
 }

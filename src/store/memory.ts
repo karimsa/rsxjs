@@ -12,111 +12,124 @@ import { Store, SetOptions } from './store'
 let map: Map<string, any>
 
 export class MemoryStore implements Store {
-  private readonly map: Map<string, any> = map = map || new Map()
+	private readonly map: Map<string, any> = (map = map || new Map())
 
-  async incr(key: string): Promise<void> {
-    this.map.set(key, (this.map.get(key)|0) + 1)
-  }
+	async incr(key: string): Promise<void> {
+		this.map.set(key, (this.map.get(key) | 0) + 1)
+	}
 
-  async decr(key: string): Promise<void> {
-    this.map.set(key, (this.map.get(key)|0) - 1)
-  }
+	async decr(key: string): Promise<void> {
+		this.map.set(key, (this.map.get(key) | 0) - 1)
+	}
 
-  async get<T>(key: string): Promise<T | void> {
-    return this.map.get(key)
-  }
+	async get<T>(key: string): Promise<T | void> {
+		return this.map.get(key)
+	}
 
-  async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
-    if (options) {
-      if (options.notExists && this.map.has(key)) {
-        return
-      }
+	async set<T>(key: string, value: T, options?: SetOptions): Promise<void> {
+		if (options) {
+			if (options.notExists && this.map.has(key)) {
+				return
+			}
 
-      if (options.expires !== undefined) {
-        setTimeout(() => this.map.delete(key), options.expires)
-      }
-    }
+			if (options.expires !== undefined) {
+				setTimeout(() => this.map.delete(key), options.expires)
+			}
+		}
 
-    this.map.set(key, value)
-  }
+		this.map.set(key, value)
+	}
 
-  async del(key: string): Promise<void> {
-    this.map.delete(key)
-  }
+	async del(key: string): Promise<void> {
+		this.map.delete(key)
+	}
 
-  async hget<T>(namespace: string, key: string): Promise<T | void>;
-  async hget<T>(namespace: string, key: string, defaultValue: T): Promise<T>;
+	async hget<T>(namespace: string, key: string): Promise<T | void>
+	async hget<T>(namespace: string, key: string, defaultValue: T): Promise<T>
 
-  async hget<T>(namespace: string, key: string, defaultValue?: T): Promise<T | void> {
-    const map: Map<string, any> | void = this.map.get(namespace)
-    if (!map) {
-      return defaultValue
-    }
+	async hget<T>(
+		namespace: string,
+		key: string,
+		defaultValue?: T,
+	): Promise<T | void> {
+		const map: Map<string, any> | void = this.map.get(namespace)
+		if (!map) {
+			return defaultValue
+		}
 
-    return map.get(key) || defaultValue
-  }
+		return map.get(key) || defaultValue
+	}
 
-  async hset<T>(namespace: string, key: string, value: T): Promise<void> {
-    const map: Map<string, any> = this.map.get(namespace) || new Map<string, any>()
-    this.map.set(namespace, map)
-    map.set(key, value)
-  }
+	async hset<T>(namespace: string, key: string, value: T): Promise<void> {
+		const map: Map<string, any> =
+			this.map.get(namespace) || new Map<string, any>()
+		this.map.set(namespace, map)
+		map.set(key, value)
+	}
 
-  async hincr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, 1 + (await this.hget(namespace, key, 0)))
-  }
+	async hincr(namespace: string, key: string): Promise<void> {
+		return this.hset(namespace, key, 1 + (await this.hget(namespace, key, 0)))
+	}
 
-  async hdecr(namespace: string, key: string): Promise<void> {
-    return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
-  }
+	async hdecr(namespace: string, key: string): Promise<void> {
+		return this.hset(namespace, key, -1 + (await this.hget(namespace, key, 0)))
+	}
 
-  async rpush<T>(listName: string, value: T): Promise<void> {
-    if (!this.map.has(listName)) {
-      this.map.set(listName, makeChan({
-        bufferSize: 1e9,
-      }))
-    }
+	async rpush<T>(listName: string, value: T): Promise<number> {
+		if (!this.map.has(listName)) {
+			this.map.set(
+				listName,
+				makeChan({
+					bufferSize: 1e9,
+				}),
+			)
+		}
 
-    const q: chan<any> = this.map.get(listName)
-    await q.put(value)
-  }
+		const q: chan<any> = this.map.get(listName)
+		await q.put(value)
+		return this.map.size
+	}
 
-  async lpush<T>(listName: string, value: T): Promise<void> {
-    if (!this.map.has(listName)) {
-      this.map.set(listName, makeChan({
-        bufferSize: 1e9,
-      }))
-    }
+	async lpush<T>(listName: string, value: T): Promise<number> {
+		if (!this.map.has(listName)) {
+			this.map.set(
+				listName,
+				makeChan({
+					bufferSize: 1e9,
+				}),
+			)
+		}
 
-    const q: chan<any> = this.map.get(listName)
-    await q.lput(value)
-  }
+		const q: chan<any> = this.map.get(listName)
+		await q.lput(value)
+		return this.map.size
+	}
 
-  async rpop<T>(listName: string): Promise<T | void> {
-    const q: chan<any> = this.map.get(listName)
-    if (q) {
-      return q.rselect().value
-    }
-  }
+	async rpop<T>(listName: string): Promise<T | void> {
+		const q: chan<any> = this.map.get(listName)
+		if (q) {
+			return q.rselect().value
+		}
+	}
 
-  async lpop<T>(listName: string): Promise<T | void> {
-    const q: chan<any> = this.map.get(listName)
-    if (q) {
-      return q.select().value
-    }
-  }
+	async lpop<T>(listName: string): Promise<T | void> {
+		const q: chan<any> = this.map.get(listName)
+		if (q) {
+			return q.select().value
+		}
+	}
 
-  async brpop<T>(listName: string, timeout: number): Promise<T | void> {
-    const q: chan<any> = this.map.get(listName)
-    if (q) {
-      return (await q.rtake(timeout)).value
-    }
-  }
+	async brpop<T>(listName: string, timeout: number): Promise<T | void> {
+		const q: chan<any> = this.map.get(listName)
+		if (q) {
+			return (await q.rtake(timeout)).value
+		}
+	}
 
-  async blpop<T>(listName: string, timeout: number): Promise<T | void> {
-    const q: chan<any> = this.map.get(listName)
-    if (q) {
-      return (await q.take(timeout)).value
-    }
-  }
+	async blpop<T>(listName: string, timeout: number): Promise<T | void> {
+		const q: chan<any> = this.map.get(listName)
+		if (q) {
+			return (await q.take(timeout)).value
+		}
+	}
 }

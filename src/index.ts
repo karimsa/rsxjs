@@ -11,42 +11,20 @@ import * as Timeout from './timeout'
 import * as Fallback from './fallback'
 import * as Deferral from './deferral'
 
-export {
-  WaitGroup,
-} from './waitgroup'
+export { WaitGroup } from './waitgroup'
 
-export {
-  chan,
-  select,
-  makeChan,
-  readOnlyChan,
-  writeOnlyChan,
-} from './channel'
+export { chan, select, makeChan, readOnlyChan, writeOnlyChan } from './channel'
 
-export {
-  co,
-} from './coroutine'
+export { co } from './coroutine'
 
-export {
-  Store,
-  RedisStore,
-  MemoryStore,
-} from './store'
+export { Store, RedisStore, MemoryStore } from './store'
 
-export {
-  Breaker,
-  Mutex,
-  Pool,
-  Semaphore,
-  Timeout,
-  Fallback,
-  Deferral,
-}
+export { Breaker, Mutex, Pool, Semaphore, Timeout, Fallback, Deferral }
 
 // for unit testing
 import * as utils from './utils'
 if (process.env.NODE_ENV === 'test') {
-  Object.assign(exports, {
-    ...utils,
-  })
+	Object.assign(exports, {
+		...utils,
+	})
 }

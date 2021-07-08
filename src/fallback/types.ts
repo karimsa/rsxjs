@@ -4,6 +4,6 @@
  */
 
 export interface FallbackResult {
-  isFallback: true
-  error: Error
+	isFallback: true
+	error: Error
 }
