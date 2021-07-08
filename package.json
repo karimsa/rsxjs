@@ -4,7 +4,7 @@
 	"description": "Resilience Extensions for JS.",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "tsc --emitDeclarationOnly --outDir dist && jest --runInBand",
+		"test": "tsc --emitDeclarationOnly --outDir dist && jest --runInBand '__tests__/**/test-*.js'",
 		"build": "esbuild src/index.ts --bundle --external:uuid --external:check-types --external:debug --external:ioredis --outfile=dist/index.js --platform=node",
 		"lint": "prettier --check './src/**'",
 		"format": "prettier --write './src/**'",
@@ -32,27 +32,27 @@
 		"@babel/core": "^7.14.6",
 		"@babel/polyfill": "^7.0.0",
 		"@babel/preset-env": "^7.14.7",
-		"@babel/register": "^7.0.0",
-		"@types/check-types": "^7.3.1",
-		"@types/debug": "0.0.31",
-		"@types/ioredis": "^4.0.3",
-		"@types/node": "^10.12.2",
-		"@types/uuid": "^3.4.4",
+		"@babel/register": "^7.14.5",
+		"@types/check-types": "^7.3.2",
+		"@types/debug": "4.1.6",
+		"@types/ioredis": "^4.26.5",
+		"@types/node": "^16.0.1",
+		"@types/uuid": "^8.3.1",
 		"babel-jest": "^27.0.6",
-		"bluebird": "^3.5.2",
+		"bluebird": "^3.7.2",
 		"esbuild": "^0.12.15",
 		"jest": "^27.0.6",
-		"lolex": "^3.0.0",
+		"lolex": "^5.1.2",
 		"prettier": "^2.3.2",
-		"sinon": "^7.1.1",
+		"sinon": "^11.1.1",
 		"typescript": "^4.3.5"
 	},
 	"optionalDependencies": {
-		"ioredis": "^4.2.0"
+		"ioredis": "^4.27.6"
 	},
 	"dependencies": {
 		"check-types": "^11.1.2",
-		"debug": "^4.1.0",
-		"uuid": "^3.3.2"
+		"debug": "^4.3.2",
+		"uuid": "^8.3.2"
 	}
 }
