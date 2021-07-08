@@ -33,7 +33,6 @@ jobs:
           set -e
           npm run build
           npm test
-          npm run coverage
       - name: Publish
         if: "startsWith(github.ref, 'refs/tags/v') && matrix.node == 8"
         run: |

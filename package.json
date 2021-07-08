@@ -4,7 +4,7 @@
 	"description": "Resilience Extensions for JS.",
 	"main": "dist/index.js",
 	"scripts": {
-		"test": "tsc --emitDeclarationOnly --outDir dist && jest --runInBand --forceExit",
+		"test": "tsc --emitDeclarationOnly --outDir dist && jest --runInBand --forceExit --detectOpenHandles",
 		"build": "esbuild src/index.ts --bundle --external:uuid --external:check-types --external:debug --external:ioredis --outfile=dist/index.js --platform=node",
 		"lint": "prettier --check './src/**'",
 		"format": "prettier --write './src/**'",
